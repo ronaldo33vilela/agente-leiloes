@@ -5,128 +5,103 @@ import json
 class GovDealsScraper(BaseScraper):
     """
     Scraper para o site GovDeals.
-    O GovDeals usa Angular (SPA), então o HTML estático não contém os resultados.
-    Usamos Selenium para renderizar a página e extrair os dados via JavaScript.
+    Usa requests + BeautifulSoup (sem Selenium).
+    
+    Estratégia:
+    1. Tenta a API interna de busca do GovDeals (JSON)
+    2. Fallback para scraping HTML da página de busca
     """
     
     def __init__(self):
         super().__init__("GovDeals")
         self.base_url = "https://www.govdeals.com"
-        self.driver = None
-        
-    def _init_driver(self):
-        """Inicializa o Selenium WebDriver se ainda não estiver ativo."""
-        if self.driver:
-            return
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-            
-            self.driver = webdriver.Chrome(options=options)
-            self.driver.set_page_load_timeout(30)
-            logger.info("Selenium WebDriver inicializado para GovDeals.")
-        except Exception as e:
-            logger.error(f"Erro ao inicializar Selenium: {e}")
-            self.driver = None
         
     def search(self, keyword):
-        """Busca itens no GovDeals usando Selenium."""
+        """Busca itens no GovDeals usando requests."""
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
-        self._init_driver()
-        if not self.driver:
-            logger.warning("Selenium não disponível. Tentando fallback com requests...")
-            return self._search_fallback(keyword)
+        # Tenta a API JSON primeiro (mais confiável)
+        results = self._search_api(keyword)
+        if results:
+            return results
         
+        # Fallback para scraping HTML
+        return self._search_html(keyword)
+    
+    def _search_api(self, keyword):
+        """Tenta buscar via API interna do GovDeals."""
         try:
-            import time
+            # GovDeals usa uma API interna para busca
+            api_url = f"{self.base_url}/index.cfm"
+            params = {
+                "fa": "Main.AdvSearchResultsNew",
+                "searchPg": "Main",
+                "kession": "",
+                "category": "00",
+                "subcategory": "00",
+                "searchtext": keyword,
+                "sortOption": "ad",
+                "timing": "ByClosing",
+                "rowCount": "20",
+                "StartRow": "1"
+            }
             
-            search_url = f"{self.base_url}/en/search?q={keyword.replace(' ', '+')}&sort=closing_soon"
-            self.driver.get(search_url)
-            
-            # Espera os cards carregarem (até 10 segundos)
-            time.sleep(10)
-            
-            # Extrai dados via JavaScript - script melhorado
-            script = """
-            const cards = document.querySelectorAll('.card-search');
-            let results = [];
-            cards.forEach((card) => {
-                const titleEl = card.querySelector('a[name="lnkImageAssetDetails"]');
-                const linkEl = card.querySelector('a[href*="/en/asset/"]');
-                
-                let title = titleEl ? (titleEl.getAttribute('title') || titleEl.textContent.trim()) : '';
-                let link = linkEl ? linkEl.getAttribute('href') : '';
-                
-                // Extrai preço de forma mais precisa
-                let priceEl = card.querySelector('.price-amount, .current-bid, [class*="price"]');
-                let price = '';
-                if (priceEl) {
-                    let priceText = priceEl.textContent.trim();
-                    let match = priceText.match(/USD\\s*[\\d,]+\\.\\d{2}/);
-                    if (match) price = match[0];
-                }
-                
-                // Fallback: busca no texto do card
-                if (!price) {
-                    let cardText = card.textContent;
-                    let match = cardText.match(/USD\\s*([\\d,]+\\.\\d{2})(?![\\d])/);
-                    if (match) price = 'USD ' + match[1];
-                }
-                
-                // Extrai lot number
-                let lotText = card.textContent;
-                let lotMatch = lotText.match(/Lot#:\\s*([\\d-]+)/);
-                let lot = lotMatch ? lotMatch[1] : '';
-                
-                // Extrai localização
-                let locMatch = lotText.match(/([A-Z][a-z]+(?:\\s[A-Z][a-z]+)*,\\s*[A-Za-z]+(?:\\s[A-Za-z]+)*,\\s*USA)/);
-                let location = locMatch ? locMatch[1] : '';
-                
-                if (title && link) {
-                    results.push({title, link, price, lot, location});
-                }
-            });
-            return JSON.stringify(results);
-            """
-            
-            result_json = self.driver.execute_script(script)
-            items = json.loads(result_json)
+            soup = self.fetch_page(api_url, params=params)
+            if not soup:
+                return []
             
             results = []
-            for item in items:
-                lot_id = item.get('lot', '').replace('-', '_')
-                if not lot_id:
-                    lot_id = item['link'].replace('/', '_')
+            processed = set()
+            
+            # Busca links de assets na página de resultados
+            # GovDeals usa links no formato /index.cfm?fa=Main.Item&itemid=XXX ou /en/asset/XXX
+            asset_links = soup.find_all('a', href=re.compile(r'(itemid=|/en/asset/|/asset/)'))
+            
+            for link_elem in asset_links:
+                try:
+                    href = link_elem.get('href', '')
+                    title = link_elem.get('title', '').strip() or link_elem.text.strip()
                     
-                results.append({
-                    "id": f"govdeals_{lot_id}",
-                    "site": self.site_name,
-                    "title": item['title'],
-                    "link": f"{self.base_url}{item['link']}",
-                    "price": item['price'] or "Preço não disponível",
-                    "location": item.get('location', ''),
-                    "keyword": keyword
-                })
-                
-            logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
+                    if not title or href in processed or len(title) < 3:
+                        continue
+                    
+                    processed.add(href)
+                    
+                    # Extrai ID do item
+                    id_match = re.search(r'itemid=(\d+)', href)
+                    if id_match:
+                        lot_id = id_match.group(1)
+                    else:
+                        parts = href.strip('/').split('/')
+                        lot_id = '_'.join(parts[-2:]) if len(parts) >= 2 else str(hash(href) % 100000)
+                    
+                    # Busca preço no contexto próximo
+                    price = self._extract_price(link_elem)
+                    
+                    # Monta link completo
+                    full_link = href if href.startswith('http') else f"{self.base_url}{href}"
+                    
+                    results.append({
+                        "id": f"govdeals_{lot_id}",
+                        "site": self.site_name,
+                        "title": title,
+                        "link": full_link,
+                        "price": price,
+                        "keyword": keyword
+                    })
+                except Exception as e:
+                    logger.error(f"Erro ao processar item da API: {e}")
+            
+            logger.info(f"API encontrou {len(results)} itens no {self.site_name} para '{keyword}'")
             return results
             
         except Exception as e:
-            logger.error(f"Erro no Selenium para {self.site_name}: {e}")
-            return self._search_fallback(keyword)
-            
-    def _search_fallback(self, keyword):
-        """Fallback usando requests para quando o Selenium não estiver disponível."""
-        logger.info(f"Usando fallback (requests) para {self.site_name}...")
+            logger.error(f"Erro na busca API do {self.site_name}: {e}")
+            return []
+    
+    def _search_html(self, keyword):
+        """Busca usando scraping HTML da página de busca."""
+        logger.info(f"Usando busca HTML para {self.site_name}...")
         
         search_url = f"{self.base_url}/en/search"
         params = {"q": keyword, "sort": "closing_soon"}
@@ -136,39 +111,48 @@ class GovDealsScraper(BaseScraper):
             return []
             
         results = []
-        links = soup.find_all('a', href=re.compile(r'/en/asset/'))
         processed = set()
+        
+        # Busca links de assets
+        links = soup.find_all('a', href=re.compile(r'/en/asset/'))
         
         for link_elem in links:
             try:
                 href = link_elem.get('href', '')
-                title = link_elem.get('title', '').strip()
+                title = link_elem.get('title', '').strip() or link_elem.text.strip()
                 
-                if not title or href in processed:
+                if not title or href in processed or len(title) < 3:
                     continue
                     
                 processed.add(href)
                 parts = href.strip('/').split('/')
-                lot_id = '_'.join(parts[-2:]) if len(parts) >= 2 else href
+                lot_id = '_'.join(parts[-2:]) if len(parts) >= 2 else str(hash(href) % 100000)
+                
+                # Busca preço no contexto próximo
+                price = self._extract_price(link_elem)
                 
                 results.append({
                     "id": f"govdeals_{lot_id}",
                     "site": self.site_name,
                     "title": title,
                     "link": f"{self.base_url}{href}",
-                    "price": "Preço não disponível (requer JavaScript)",
+                    "price": price,
                     "keyword": keyword
                 })
             except Exception as e:
-                logger.error(f"Erro no fallback: {e}")
+                logger.error(f"Erro no scraping HTML: {e}")
                 
-        logger.info(f"Fallback encontrou {len(results)} itens no {self.site_name}")
+        logger.info(f"HTML encontrou {len(results)} itens no {self.site_name}")
         return results
-        
-    def __del__(self):
-        """Fecha o driver ao destruir o objeto."""
-        if self.driver:
-            try:
-                self.driver.quit()
-            except:
-                pass
+    
+    def _extract_price(self, element):
+        """Extrai preço do contexto próximo a um elemento."""
+        parent = element
+        for _ in range(5):
+            parent = parent.parent
+            if parent is None:
+                break
+            price_match = re.search(r'(?:USD\s*)?[\$]?([\d,]+\.\d{2})', parent.text)
+            if price_match:
+                return f"USD {price_match.group(1)}"
+        return "Consultar no site"
