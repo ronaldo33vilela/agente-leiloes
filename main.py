@@ -449,6 +449,28 @@ def send_telegram_message(chat_id, text, parse_mode="HTML"):
         return False
 
 
+@app.route("/api/clear-data", methods=["POST"])
+def clear_data():
+    """Limpa os dados antigos do banco de dados."""
+    try:
+        from modules.database import clear_notified_items, clear_watchlist, clear_price_history
+        
+        # Limpar tabelas
+        clear_notified_items()
+        clear_watchlist()
+        clear_price_history()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Todos os dados foram limpos com sucesso. Pronto para começar do zero!"
+        }), 200
+    except Exception as e:
+        logger.error(f"Erro ao limpar dados: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Erro ao limpar dados: {str(e)}"
+        }), 500
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     """Recebe updates do Telegram e processa comandos."""
@@ -1098,6 +1120,8 @@ a:hover{{text-decoration:underline}}
         <span>Atualizado: {now.strftime("%d/%m/%Y %H:%M:%S")}</span>
         <span>|</span>
         <span>Auto-refresh: 60s</span>
+        <span>|</span>
+        <button onclick="clearAllData()" style="background:#f85149;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.2s" onmouseover="this.style.background='#da3633'" onmouseout="this.style.background='#f85149'">Limpar Dados</button>
     </div>
 </div>
 
@@ -1308,6 +1332,42 @@ a:hover{{text-decoration:underline}}
 
 <script>
 window.categoryDataCache = {{}};
+
+function clearAllData() {{
+    if (!confirm('Tem certeza que deseja limpar TODOS os dados? Esta acao nao pode ser desfeita!')) {{
+        return;
+    }}
+    
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Limpando...';
+    
+    fetch('/api/clear-data', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}}
+    }})
+    .then(function(response) {{
+        return response.json();
+    }})
+    .then(function(data) {{
+        if (data.status === 'success') {{
+            alert('Dados limpos com sucesso! O dashboard sera atualizado em 3 segundos...');
+            window.categoryDataCache = {{}};
+            setTimeout(function() {{
+                location.reload();
+            }}, 3000);
+        }} else {{
+            alert('Erro: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = 'Limpar Dados';
+        }}
+    }})
+    .catch(function(error) {{
+        alert('Erro ao limpar dados: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Limpar Dados';
+    }});
+}}
 
 function switchTab(tabName) {{
     document.querySelectorAll('.tab-content').forEach(function(el) {{
