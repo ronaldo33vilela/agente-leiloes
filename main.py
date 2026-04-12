@@ -1014,16 +1014,25 @@ a:hover{{text-decoration:underline}}
 .cat-sub-details{{background:#1c2128;border-left:3px solid #58a6ff;padding:15px;margin-top:5px;border-radius:6px;max-height:0;overflow:hidden;transition:max-height 0.3s ease,display 0.3s ease;display:none}}
 .cat-sub-details.expanded{{max-height:3000px!important;display:block!important}}
 
-.term-list{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:15px}}
-.term-item{{background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color 0.2s}}
-.term-item:hover{{border-color:#58a6ff;background:#1c2128}}
-.term-name{{color:#f0f6fc;font-weight:500}}
-.term-count{{color:#8b949e;font-size:11px}}
-.term-links{{display:flex;gap:6px;flex-wrap:nowrap}}
-.search-link{{color:#58a6ff;text-decoration:none;font-size:11px;font-weight:600;padding:3px 8px;background:#21262d;border-radius:4px;border:1px solid #30363d;transition:all 0.2s;white-space:nowrap}}
-.search-link:hover{{background:#30363d;border-color:#58a6ff;color:#79c0ff}}
-.term-name{{color:#f0f6fc;font-weight:500;margin-bottom:5px}}
-.term-count{{color:#8b949e;font-size:11px}}
+.platform-badge{{display:inline-block;background:#21262d;color:#58a6ff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid #30363d}}
+.no-items-box{{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:30px;text-align:center}}
+
+.platforms-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:15px;margin-bottom:25px}}
+.platform-card{{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;transition:border-color 0.2s}}
+.platform-card:hover{{border-color:#58a6ff}}
+.plat-header{{display:flex;align-items:center;gap:15px;padding:18px;background:#1c2333;border-bottom:1px solid #30363d}}
+.plat-icon{{font-size:32px}}
+.plat-info{{flex:1}}
+.plat-name{{font-weight:700;color:#f0f6fc;font-size:16px;margin-bottom:3px}}
+.plat-desc{{font-size:12px;color:#8b949e;line-height:1.4}}
+.plat-visit{{background:#238636;color:#fff;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;transition:background 0.2s;white-space:nowrap}}
+.plat-visit:hover{{background:#2ea043;text-decoration:none}}
+.plat-search{{display:flex;gap:8px;padding:12px 18px;align-items:center}}
+.plat-input{{flex:1;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:8px 12px;border-radius:6px;font-size:13px;outline:none;transition:border-color 0.2s}}
+.plat-input:focus{{border-color:#58a6ff}}
+.plat-input:disabled{{opacity:0.5;cursor:not-allowed}}
+.plat-btn{{background:#21262d;color:#58a6ff;border:1px solid #30363d;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;text-align:center;white-space:nowrap}}
+.plat-btn:hover{{background:#30363d;border-color:#58a6ff;text-decoration:none}}
 
 .items-table{{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}}
 .items-table th{{background:#161b22;padding:8px;text-align:left;color:#8b949e;border-bottom:1px solid #30363d;font-weight:600}}
@@ -1136,6 +1145,7 @@ a:hover{{text-decoration:underline}}
         <button class="nav-tab" onclick="switchTab('history')">Historico de Precos</button>
         <button class="nav-tab" onclick="switchTab('financial')">Financeiro</button>
         <button class="nav-tab" onclick="switchTab('logs')">Logs</button>
+        <button class="nav-tab" onclick="switchTab('platforms')">Plataformas</button>
     </div>
 
     <!-- TAB: VISAO GERAL -->
@@ -1320,6 +1330,89 @@ a:hover{{text-decoration:underline}}
         <div class="logs-container">{logs_html}</div>
     </div>
 
+    <!-- TAB: PLATAFORMAS -->
+    <div id="tab-platforms" class="tab-content">
+        <div class="section-title">Plataformas de Leilao</div>
+        <div class="platforms-grid">
+
+            <div class="platform-card">
+                <div class="plat-header" style="border-left:4px solid #3fb950">
+                    <div class="plat-icon">&#127981;</div>
+                    <div class="plat-info">
+                        <div class="plat-name">GovDeals</div>
+                        <div class="plat-desc">Leiloes de equipamentos governamentais e excedentes publicos</div>
+                    </div>
+                    <a href="https://www.govdeals.com" target="_blank" class="plat-visit">Visitar</a>
+                </div>
+                <div class="plat-search">
+                    <input type="text" id="search-govdeals" placeholder="Buscar em GovDeals..." class="plat-input" onkeydown="if(event.key==='Enter')searchPlatform('govdeals')">
+                    <button onclick="searchPlatform('govdeals')" class="plat-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="platform-card">
+                <div class="plat-header" style="border-left:4px solid #58a6ff">
+                    <div class="plat-icon">&#128296;</div>
+                    <div class="plat-info">
+                        <div class="plat-name">BidSpotter</div>
+                        <div class="plat-desc">Leiloes industriais e de equipamentos comerciais</div>
+                    </div>
+                    <a href="https://www.bidspotter.com" target="_blank" class="plat-visit">Visitar</a>
+                </div>
+                <div class="plat-search">
+                    <input type="text" id="search-bidspotter" placeholder="Buscar em BidSpotter..." class="plat-input" onkeydown="if(event.key==='Enter')searchPlatform('bidspotter')">
+                    <button onclick="searchPlatform('bidspotter')" class="plat-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="platform-card">
+                <div class="plat-header" style="border-left:4px solid #d2a8ff">
+                    <div class="plat-icon">&#127970;</div>
+                    <div class="plat-info">
+                        <div class="plat-name">Public Surplus</div>
+                        <div class="plat-desc">Excedentes de agencias publicas e municipios</div>
+                    </div>
+                    <a href="https://www.publicsurplus.com" target="_blank" class="plat-visit">Visitar</a>
+                </div>
+                <div class="plat-search">
+                    <input type="text" id="search-publicsurplus" placeholder="Buscar em Public Surplus..." class="plat-input" onkeydown="if(event.key==='Enter')searchPlatform('publicsurplus')">
+                    <button onclick="searchPlatform('publicsurplus')" class="plat-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="platform-card">
+                <div class="plat-header" style="border-left:4px solid #f0883e">
+                    <div class="plat-icon">&#128666;</div>
+                    <div class="plat-info">
+                        <div class="plat-name">JJ Kane</div>
+                        <div class="plat-desc">Leiloes de veiculos, equipamentos pesados e golf carts</div>
+                    </div>
+                    <a href="https://www.jjkane.com" target="_blank" class="plat-visit">Visitar</a>
+                </div>
+                <div class="plat-search">
+                    <input type="text" id="search-jjkane" placeholder="Buscar em JJ Kane..." class="plat-input" onkeydown="if(event.key==='Enter')searchPlatform('jjkane')">
+                    <button onclick="searchPlatform('jjkane')" class="plat-btn">Buscar</button>
+                </div>
+            </div>
+
+            <div class="platform-card">
+                <div class="plat-header" style="border-left:4px solid #f85149">
+                    <div class="plat-icon">&#127908;</div>
+                    <div class="plat-info">
+                        <div class="plat-name">AVGear</div>
+                        <div class="plat-desc">Leiloes especiais de equipamentos de audio e video profissional</div>
+                    </div>
+                    <a href="https://www.avgear.com/pages/auctions" target="_blank" class="plat-visit">Visitar</a>
+                </div>
+                <div class="plat-search">
+                    <input type="text" id="search-avgear" placeholder="AVGear nao tem busca (leiloes via parceiros)" class="plat-input" disabled>
+                    <a href="https://www.avgear.com/pages/auctions" target="_blank" class="plat-btn">Ver Leiloes</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <div class="footer">
@@ -1332,6 +1425,25 @@ a:hover{{text-decoration:underline}}
 
 <script>
 window.categoryDataCache = {{}};
+
+function searchPlatform(platform) {{
+    var urls = {{
+        'govdeals': 'https://www.govdeals.com/index.cfm?fa=Main.AdvSearchResultsNew&searchPg=Classic&kword=',
+        'bidspotter': 'https://www.bidspotter.com/en-us/search?query=',
+        'publicsurplus': 'https://www.publicsurplus.com/sms/browse/search?posting=y&keyword=',
+        'jjkane': 'https://www.jjkane.com/search?q='
+    }};
+    var input = document.getElementById('search-' + platform);
+    if (!input || !input.value.trim()) {{
+        alert('Digite um termo de busca');
+        return;
+    }}
+    var term = encodeURIComponent(input.value.trim());
+    var url = urls[platform];
+    if (url) {{
+        window.open(url + term, '_blank');
+    }}
+}}
 
 function clearAllData() {{
     if (!confirm('Tem certeza que deseja limpar TODOS os dados? Esta acao nao pode ser desfeita!')) {{
@@ -1453,44 +1565,31 @@ function renderCategoryData(data, detailsElem) {{
     }}
     
     var html = '';
-    html += '<div style="margin-bottom:15px">';
-    html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Termos de Busca (' + data.terms.length + ')</div>';
-    html += '<div class="term-list">';
     
-    data.terms.forEach(function(term) {{
-        var itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
-        var encodedTerm = encodeURIComponent(term);
-        var govdealsUrl = 'https://www.govdeals.com/index.cfm?fa=Main.AdvSearchResultsNew&searchPg=Classic&kword=' + encodedTerm;
-        var bidspotterUrl = 'https://www.bidspotter.com/en-us/search?query=' + encodedTerm;
-        var publicsurplusUrl = 'https://www.publicsurplus.com/sms/browse/search?posting=y&keyword=' + encodedTerm;
-        var jjkaneUrl = 'https://www.jjkane.com/search?q=' + encodedTerm;
-        var avgearUrl = 'https://www.avgear.com/pages/auctions';
-        
-        html += '<div class="term-item">';
-        html += '<div style="flex:1">';
-        html += '<div class="term-name">' + term + '</div>';
-        html += '<div class="term-count">' + itemCount + ' ite' + (itemCount !== 1 ? 'ns' : 'm') + '</div>';
-        html += '</div>';
-        html += '<div class="term-links">';
-        html += '<a href="' + govdealsUrl + '" target="_blank" title="Buscar em GovDeals" class="search-link">GD</a>';
-        html += '<a href="' + bidspotterUrl + '" target="_blank" title="Buscar em BidSpotter" class="search-link">BS</a>';
-        html += '<a href="' + publicsurplusUrl + '" target="_blank" title="Buscar em Public Surplus" class="search-link">PS</a>';
-        html += '<a href="' + jjkaneUrl + '" target="_blank" title="Buscar em JJ Kane" class="search-link">JK</a>';
-        html += '<a href="' + avgearUrl + '" target="_blank" title="Ver leiloes AVGear" class="search-link">AV</a>';
-        html += '</div>';
-        html += '</div>';
-    }});
+    /* Contar total de produtos encontrados */
+    var totalItems = 0;
+    for (var t in data.items_by_term) {{
+        if (data.items_by_term.hasOwnProperty(t)) {{
+            totalItems += data.items_by_term[t].length;
+        }}
+    }}
     
+    /* Header com resumo */
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px">';
+    html += '<div style="color:#f0f6fc;font-weight:600;font-size:13px">Produtos Encontrados</div>';
+    html += '<div style="display:flex;gap:10px;font-size:12px">';
+    html += '<span style="color:#8b949e">' + data.terms.length + ' termos</span>';
+    html += '<span style="color:#3fb950;font-weight:600">' + totalItems + ' produto' + (totalItems !== 1 ? 's' : '') + '</span>';
     html += '</div></div>';
     
-    var hasItems = Object.keys(data.items_by_term).length > 0;
-    if (hasItems) {{
-        html += '<div style="margin-bottom:15px">';
-        html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Itens Encontrados</div>';
-        html += '<table class="items-table"><thead><tr><th>Titulo</th><th>Preco</th><th>Site</th><th>Acao</th></tr></thead><tbody>';
+    if (totalItems > 0) {{
+        /* Tabela de produtos encontrados */
+        html += '<table class="items-table"><thead><tr>';
+        html += '<th>Produto</th><th>Termo</th><th>Plataforma</th><th>Preco</th><th>Acao</th>';
+        html += '</tr></thead><tbody>';
         
         for (var term in data.items_by_term) {{
-            if (data.items_by_term.hasOwnProperty(term)) {{
+            if (data.items_by_term.hasOwnProperty(term) && data.items_by_term[term].length > 0) {{
                 data.items_by_term[term].forEach(function(item) {{
                     var title = item.title || item.name || 'N/A';
                     var price = item.price || 'N/A';
@@ -1498,17 +1597,22 @@ function renderCategoryData(data, detailsElem) {{
                     var link = item.link || item.url || '#';
                     html += '<tr>';
                     html += '<td class="item-title" title="' + title + '">' + title + '</td>';
+                    html += '<td style="color:#8b949e;font-size:11px">' + term + '</td>';
+                    html += '<td><span class="platform-badge">' + site + '</span></td>';
                     html += '<td class="item-price">' + price + '</td>';
-                    html += '<td class="item-site">' + site + '</td>';
-                    html += '<td><a href="' + link + '" target="_blank" class="item-link">Ver</a></td>';
+                    html += '<td><a href="' + link + '" target="_blank" class="item-link">Ver Leilao</a></td>';
                     html += '</tr>';
                 }});
             }}
         }}
         
-        html += '</tbody></table></div>';
+        html += '</tbody></table>';
     }} else {{
-        html += '<div class="no-items">Nenhum item encontrado ainda para esta categoria</div>';
+        html += '<div class="no-items-box">';
+        html += '<div style="font-size:28px;margin-bottom:10px">&#128269;</div>';
+        html += '<div style="color:#8b949e;font-size:13px">Nenhum produto encontrado ainda nesta categoria</div>';
+        html += '<div style="color:#484f58;font-size:11px;margin-top:5px">O agente esta buscando automaticamente a cada hora</div>';
+        html += '</div>';
     }}
     
     detailsElem.innerHTML = html;
