@@ -5,8 +5,12 @@ import json
 class AVGearScraper(BaseScraper):
     """
     Scraper para o site AVGear.
-    AVGear é um site de equipamentos audiovisuais.
-    Tentamos a API JSON do Shopify e fallback para HTML.
+    AVGear é um site de equipamentos audiovisuais (Shopify).
+    Usa requests + BeautifulSoup (sem Selenium).
+    
+    Estratégia:
+    1. Tenta a API JSON do Shopify (search/suggest.json)
+    2. Fallback para scraping HTML
     """
     
     def __init__(self):
@@ -35,9 +39,9 @@ class AVGearScraper(BaseScraper):
                 "resources[limit]": 20
             }
             
-            response = self.session.get(search_url, params=params, timeout=15)
-            response.raise_for_status()
-            data = response.json()
+            data = self.fetch_json(search_url, params=params)
+            if not data:
+                return []
             
             results = []
             products = data.get('resources', {}).get('results', {}).get('products', [])
@@ -52,7 +56,7 @@ class AVGearScraper(BaseScraper):
                     try:
                         price_float = float(price)
                         price_str = f"${price_float:,.2f}"
-                    except:
+                    except (ValueError, TypeError):
                         price_str = f"${price}"
                 else:
                     price_str = "Consultar no site"
@@ -125,7 +129,7 @@ class AVGearScraper(BaseScraper):
                 # Preço: busca no contexto do card pai
                 price_text = "Consultar no site"
                 parent = link_elem.parent
-                for _ in range(3):  # Sobe até 3 níveis
+                for _ in range(3):
                     if parent is None:
                         break
                     price_match = re.search(r'\$(\d+(?:,\d+)*\.\d{2})', parent.text)
