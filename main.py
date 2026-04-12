@@ -567,21 +567,29 @@ def webhook():
             if cmd == "/start":
                 response_text = (
                     "Bem-vindo ao Agente de Leiloes R33!\n\n"
-                    "Comandos disponiveis:\n"
+                    "Comandos disponiveis:\n\n"
+                    "<b>Busca Manual:</b>\n"
+                    "/buscar TERMO - Busca em todas as 5 plataformas\n\n"
+                    "<b>Agenda / Watchlist:</b>\n"
                     "/agendar URL TETO - Adiciona leilao a agenda\n"
                     "/agenda - Lista leiloes monitorados\n"
                     "/teto ID VALOR - Altera teto\n"
-                    "/cancelar ID - Remove da agenda\n"
+                    "/cancelar ID - Remove da agenda\n\n"
+                    "<b>Arquivo:</b>\n"
                     "/arquivar ID - Move para arquivo\n"
-                    "/arquivo [cat] - Lista arquivo\n"
+                    "/arquivo [cat] - Lista arquivo\n\n"
+                    "<b>Historico de Precos:</b>\n"
                     "/historico PRODUTO - Historico de precos\n"
-                    "/preco PRODUTO - Preco medio\n"
+                    "/preco PRODUTO - Preco medio\n\n"
+                    "<b>Pos-Arrematacao:</b>\n"
                     "/ganhou - Registra arrematacao\n"
                     "/frete ID | Transp | Rastreio - Registra frete\n"
                     "/rastrear - Status em transito\n"
-                    "/entregue ID - Marca entregue\n"
+                    "/entregue ID - Marca entregue\n\n"
+                    "<b>Estoque e Vendas:</b>\n"
                     "/estoque - Lista estoque\n"
-                    "/vender ID VALOR - Registra venda\n"
+                    "/vender ID VALOR - Registra venda\n\n"
+                    "<b>Dashboard:</b>\n"
                     "/dashboard - Resumo completo"
                 )
             
@@ -716,6 +724,42 @@ def webhook():
                     except Exception as e:
                         response_text = f"Erro: {e}"
             
+            # /buscar TERMO
+            elif cmd == "/buscar":
+                if not args:
+                    response_text = "Uso: /buscar TERMO\nExemplo: /buscar golf cart"
+                else:
+                    search_term = " ".join(args)
+                    # Envia mensagem de "buscando..."
+                    send_telegram_message(chat_id, "<b>Buscando...</b> \U0001f50d")
+                    
+                    # Executa a busca
+                    results, error = agent.bot.handle_search_command(search_term)
+                    
+                    if error:
+                        response_text = error
+                    elif results:
+                        # Formata resultados
+                        lines = [f"<b>Resultados para: {search_term}</b> ({len(results)} encontrados)\n"]
+                        for i, item in enumerate(results, 1):
+                            title = item.get('title', 'N/A')[:50]
+                            site = item.get('site', 'N/A')
+                            price = item.get('price', 0) or 0
+                            link = item.get('link', '#')
+                            score = item.get('_relevance_score', 0)
+                            
+                            lines.append(
+                                f"\n<b>{i}.</b> {title}\n"
+                                f"<b>Site:</b> {site} | "
+                                f"<b>Preco:</b> ${price:,.0f}\n"
+                                f"<b>Relevancia:</b> {score:.0%}\n"
+                                f'<a href="{link}">Ver Leilao</a>'
+                            )
+                        response_text = "".join(lines)
+                    else:
+                        response_text = f"Nenhum resultado encontrado para: <b>{search_term}</b>"
+            
+
             # /dashboard
             elif cmd == "/dashboard":
                 try:
