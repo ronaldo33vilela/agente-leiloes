@@ -389,6 +389,88 @@ SEARCH_TERMS = {
         "rental LED wall case",
         "Novastar controller lot",
     ],
+
+    # ------------------------------------------------------------------
+    # 19. Golf Carts — marcas e modelos principais
+    # ------------------------------------------------------------------
+    "golf_cart_brands": [
+        "golf cart",
+        "electric golf cart",
+        "gas golf cart",
+        "Club Car",
+        "Club Car Precedent",
+        "Club Car DS",
+        "Club Car Tempo",
+        "EZGO",
+        "EZGO TXT",
+        "EZGO RXV",
+        "Yamaha golf cart",
+        "Yamaha Drive",
+        "Yamaha G29",
+    ],
+
+    # ------------------------------------------------------------------
+    # 20. Golf Carts — lotes e frotas
+    # ------------------------------------------------------------------
+    "golf_cart_fleet": [
+        "golf cart lot",
+        "golf cart fleet",
+        "fleet of golf carts",
+        "golf carts lot",
+        "golf cart surplus",
+        "resort golf carts",
+        "golf course equipment",
+        "resort fleet golf carts",
+        "multiple golf carts",
+        "Club Car Precedent lot",
+        "EZGO TXT fleet",
+        "golf cart fleet auction",
+        "resort golf cart surplus",
+        "electric golf cart lot",
+        "utility cart fleet",
+    ],
+
+    # ------------------------------------------------------------------
+    # 21. Golf Carts — acessórios e peças
+    # ------------------------------------------------------------------
+    "golf_cart_accessories": [
+        "golf cart batteries",
+        "trojan battery",
+        "deep cycle battery",
+        "golf cart charger",
+        "club car charger",
+        "ezgo charger",
+        "golf cart parts",
+        "golf cart motor",
+        "golf cart controller",
+        "golf cart rear seat kit",
+        "golf cart lift kit",
+        "lifted golf cart",
+        "custom golf cart",
+        "golf cart wheels",
+        "golf cart body kit",
+    ],
+
+    # ------------------------------------------------------------------
+    # 22. Golf Carts — industrial e utilitários
+    # ------------------------------------------------------------------
+    "golf_cart_industrial": [
+        "utility cart",
+        "work cart",
+        "maintenance cart",
+        "used golf cart",
+        "golf cart auction",
+    ],
+
+    # ------------------------------------------------------------------
+    # 23. Golf Carts — buscas inteligentes (garimpo)
+    # ------------------------------------------------------------------
+    "golf_cart_smart": [
+        "golf cart untested",
+        "golf cart as-is",
+        "golf cart needs batteries",
+        "golf cart not working",
+    ],
 }
 
 # ==========================================
@@ -406,6 +488,8 @@ PRIORITY_A = [
     "shure_axient",
     "lighting_consoles",
     "led_controllers",
+    "golf_cart_brands",
+    "golf_cart_fleet",
     "combo_allen_heath",
     "combo_shure_axient",
     "combo_lighting",
@@ -421,10 +505,13 @@ PRIORITY_B = [
     "led_smart",
     "lighting_smart",
     "shure_axient_smart",
+    "golf_cart_accessories",
+    "golf_cart_industrial",
 ]
 
 PRIORITY_C = [
     "allen_heath_smart",
+    "golf_cart_smart",
     "opportunity_terms",
 ]
 
@@ -458,6 +545,11 @@ MAX_PRICE = {
     "combo_shure_axient":       10000,
     "combo_lighting":           20000,
     "combo_led":                25000,
+    "golf_cart_brands":         15000,
+    "golf_cart_fleet":          50000,
+    "golf_cart_accessories":     3000,
+    "golf_cart_industrial":      8000,
+    "golf_cart_smart":          10000,
 }
 
 # Margem mínima de lucro estimada (%) para enviar alerta
