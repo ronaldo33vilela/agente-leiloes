@@ -2,12 +2,12 @@
 
 Um sistema completo em Python para monitorar sites de leilao americanos, analisar oportunidades com Inteligencia Artificial e gerenciar todo o ciclo de vida do lote (da arrematacao a revenda) via Telegram.
 
-**Versao 3.0 - Busca por Categorias com Rotacao Inteligente - Otimizada para Render Free (512MB RAM)**
+**Versao 4.0 - Dashboard Web + Agenda + Historico de Precos + Filtro de Relevancia - Render Free (512MB RAM)**
 
 ## Funcionalidades
 
 ### 1. Monitoramento Inteligente com Categorias
-- **250+ Termos de Busca:** Organizados em 18 categorias (Allen & Heath, Shure Axient, Mesas de Luz, Paineis LED, etc.)
+- **278 Termos de Busca:** Organizados em 23 categorias (Allen & Heath, Shure Axient, Mesas de Luz, Paineis LED, Golf Carts, etc.)
 - **Sistema de Prioridade:** Grupo A (prioridade maxima), Grupo B (otima oportunidade), Grupo C (garimpo)
 - **Rotacao Automatica:** A cada ciclo (1 hora), processa 25 termos e rotaciona para os proximos
 - **Scraping Automatico:** Monitora 5 sites (GovDeals, Public Surplus, BidSpotter, AVGear, JJ Kane)
@@ -117,6 +117,13 @@ Envie `/help` para o seu bot para ver a lista completa de comandos:
 | `GET /health` | Health check simples |
 | `GET /stats` | Estatisticas do agente |
 | `GET /categories` | Lista categorias, prioridades e limites de preco |
+| `GET /dashboard` | Dashboard web completo (dark theme) |
+| `POST /webhook` | Webhook do Telegram |
+| `GET /api/category/<name>` | Termos e itens de uma categoria |
+| `GET /api/watchlist` | Itens da agenda/watchlist |
+| `GET /api/price-history` | Historico de precos |
+| `POST /api/clear-data` | Limpa todos os dados do banco |
+| `POST /api/scan-now` | Dispara varredura manual |
 
 ## Deploy Gratuito 24/7 no Render.com
 
@@ -189,6 +196,8 @@ agente-leiloes/
     ├── govdeals.py         # Scraper GovDeals
     ├── publicsurplus.py    # Scraper Public Surplus
     ├── bidspotter.py       # Scraper BidSpotter
-    ├── avgear.py           # Scraper AVGear (Shopify)
-    └── jjkane.py           # Scraper JJ Kane
+    ├── avgear.py           # Scraper AVGear (leiloes via Joseph Finn)
+    ├── jjkane.py           # Scraper JJ Kane
+    ├── relevance_filter.py # Filtro de relevancia por keywords
+    └── auction_utils.py    # Utilitarios para filtrar leiloes ativos
 ```
