@@ -981,7 +981,7 @@ a:hover{{text-decoration:underline}}
 .cat-group-name{{font-weight:600;color:#f0f6fc;flex:1}}
 .cat-group-total{{font-size:12px;color:#8b949e;background:#21262d;padding:3px 10px;border-radius:10px}}
 .cat-sub-list{{padding:10px 18px}}
-.cat-sub-item{{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #21262d;transition:background 0.2s;user-select:none;cursor:pointer}}
+.cat-sub-item{{display:flex;align-items:center;padding:10px;border-bottom:1px solid #21262d;transition:background 0.2s;user-select:none;cursor:pointer;border-radius:4px}}
 .cat-sub-item:last-of-type{{border-bottom:none}}
 .cat-sub-item:hover{{background:#1c2128}}
 .cat-sub-toggle{{display:inline-block;width:16px;text-align:center;color:#8b949e;font-size:12px;transition:transform 0.3s ease;margin-right:8px}}
@@ -989,8 +989,8 @@ a:hover{{text-decoration:underline}}
 .cat-sub-name{{flex:1;color:#c9d1d9;font-size:13px}}
 .cat-sub-meta{{display:flex;align-items:center;gap:8px;font-size:12px;color:#8b949e}}
 .priority-badge{{display:inline-block;width:22px;height:22px;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#0d1117}}
-.cat-sub-details{{background:#1c2128;border-left:3px solid #58a6ff;padding:15px;margin-top:5px;border-radius:6px}}
-.cat-sub-details.expanded{{max-height:2000px!important}}
+.cat-sub-details{{background:#1c2128;border-left:3px solid #58a6ff;padding:15px;margin-top:5px;border-radius:6px;max-height:0;overflow:hidden;transition:max-height 0.3s ease,display 0.3s ease;display:none}}
+.cat-sub-details.expanded{{max-height:3000px!important;display:block!important}}
 
 .term-list{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:15px}}
 .term-item{{background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px;cursor:pointer;transition:border-color 0.2s}}
@@ -1302,6 +1302,8 @@ a:hover{{text-decoration:underline}}
 </div>
 
 <script>
+window.categoryDataCache = {{}};
+
 function switchTab(tabName) {{
     document.querySelectorAll('.tab-content').forEach(function(el) {{
         el.classList.remove('active');
@@ -1311,78 +1313,124 @@ function switchTab(tabName) {{
     }});
     var tab = document.getElementById('tab-' + tabName);
     if (tab) tab.classList.add('active');
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
 }}
 
 function toggleCategory(elem, event) {{
-    event.stopPropagation();
+    if (event) event.stopPropagation();
+    
     var categoryName = elem.getAttribute('data-category');
-    var detailsId = 'details-' + categoryName.replace(/ /g, '_').toLowerCase();
+    if (!categoryName) {{
+        console.error('data-category nao encontrado');
+        return;
+    }}
+    
+    var detailsId = 'details-' + categoryName.replace(/ /g, '_').replace(/\//g, '_').toLowerCase();
     var detailsElem = document.getElementById(detailsId);
-    if (!detailsElem) return;
+    
+    if (!detailsElem) {{
+        console.error('Elemento detalhes nao encontrado:', detailsId);
+        return;
+    }}
+    
     var isExpanded = elem.classList.contains('expanded');
+    console.log('Toggle category:', categoryName, 'expanded:', isExpanded);
+    
     if (isExpanded) {{
         elem.classList.remove('expanded');
         detailsElem.classList.remove('expanded');
-        detailsElem.style.maxHeight = '0';
+        detailsElem.style.maxHeight = '0px';
+        detailsElem.style.display = 'none';
     }} else {{
         elem.classList.add('expanded');
         detailsElem.classList.add('expanded');
+        detailsElem.style.display = 'block';
+        
         if (detailsElem.querySelector('.loading')) {{
             loadCategoryData(categoryName, detailsElem);
         }}
-        detailsElem.style.maxHeight = '2000px';
+        
+        setTimeout(function() {{
+            detailsElem.style.maxHeight = '3000px';
+        }}, 10);
     }}
 }}
 
 function loadCategoryData(categoryName, detailsElem) {{
+    console.log('Carregando dados para:', categoryName);
+    
+    if (window.categoryDataCache[categoryName]) {{
+        console.log('Usando cache para:', categoryName);
+        renderCategoryData(window.categoryDataCache[categoryName], detailsElem);
+        return;
+    }}
+    
     fetch('/api/category/' + encodeURIComponent(categoryName))
-        .then(function(response) {{ return response.json(); }})
+        .then(function(response) {{
+            console.log('Response status:', response.status);
+            return response.json();
+        }})
         .then(function(data) {{
-            if (data.error) {{
-                detailsElem.innerHTML = '<div class="no-items">Erro ao carregar dados</div>';
-                return;
-            }}
-            var html = '';
-            html += '<div style="margin-bottom:15px">';
-            html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Termos de Busca (' + data.terms.length + ')</div>';
-            html += '<div class="term-list">';
-            data.terms.forEach(function(term) {{
-                var itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
-                html += '<div class="term-item">';
-                html += '<div class="term-name">' + term + '</div>';
-                html += '<div class="term-count">' + itemCount + ' ite' + (itemCount !== 1 ? 'ns' : 'm') + '</div>';
-                html += '</div>';
-            }});
-            html += '</div></div>';
-            var hasItems = Object.keys(data.items_by_term).length > 0;
-            if (hasItems) {{
-                html += '<div style="margin-bottom:15px">';
-                html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Itens Encontrados</div>';
-                html += '<table class="items-table"><thead><tr><th>Titulo</th><th>Preco</th><th>Site</th><th>Acao</th></tr></thead><tbody>';
-                for (var term in data.items_by_term) {{
-                    data.items_by_term[term].forEach(function(item) {{
-                        var title = item.title || item.name || 'N/A';
-                        var price = item.price || 'N/A';
-                        var site = item.site || 'N/A';
-                        var link = item.link || item.url || '#';
-                        html += '<tr>';
-                        html += '<td class="item-title" title="' + title + '">' + title + '</td>';
-                        html += '<td class="item-price">' + price + '</td>';
-                        html += '<td class="item-site">' + site + '</td>';
-                        html += '<td><a href="' + link + '" target="_blank" class="item-link">Ver</a></td>';
-                        html += '</tr>';
-                    }});
-                }}
-                html += '</tbody></table></div>';
-            }} else {{
-                html += '<div class="no-items">Nenhum item encontrado ainda para esta categoria</div>';
-            }}
-            detailsElem.innerHTML = html;
+            console.log('Dados recebidos:', data);
+            window.categoryDataCache[categoryName] = data;
+            renderCategoryData(data, detailsElem);
         }})
         .catch(function(error) {{
+            console.error('Erro ao carregar categoria:', error);
             detailsElem.innerHTML = '<div class="no-items">Erro ao carregar: ' + error.message + '</div>';
         }});
+}}
+
+function renderCategoryData(data, detailsElem) {{
+    if (data.error) {{
+        detailsElem.innerHTML = '<div class="no-items">Erro: ' + data.error + '</div>';
+        return;
+    }}
+    
+    var html = '';
+    html += '<div style="margin-bottom:15px">';
+    html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Termos de Busca (' + data.terms.length + ')</div>';
+    html += '<div class="term-list">';
+    
+    data.terms.forEach(function(term) {{
+        var itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
+        html += '<div class="term-item">';
+        html += '<div class="term-name">' + term + '</div>';
+        html += '<div class="term-count">' + itemCount + ' ite' + (itemCount !== 1 ? 'ns' : 'm') + '</div>';
+        html += '</div>';
+    }});
+    
+    html += '</div></div>';
+    
+    var hasItems = Object.keys(data.items_by_term).length > 0;
+    if (hasItems) {{
+        html += '<div style="margin-bottom:15px">';
+        html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Itens Encontrados</div>';
+        html += '<table class="items-table"><thead><tr><th>Titulo</th><th>Preco</th><th>Site</th><th>Acao</th></tr></thead><tbody>';
+        
+        for (var term in data.items_by_term) {{
+            if (data.items_by_term.hasOwnProperty(term)) {{
+                data.items_by_term[term].forEach(function(item) {{
+                    var title = item.title || item.name || 'N/A';
+                    var price = item.price || 'N/A';
+                    var site = item.site || 'N/A';
+                    var link = item.link || item.url || '#';
+                    html += '<tr>';
+                    html += '<td class="item-title" title="' + title + '">' + title + '</td>';
+                    html += '<td class="item-price">' + price + '</td>';
+                    html += '<td class="item-site">' + site + '</td>';
+                    html += '<td><a href="' + link + '" target="_blank" class="item-link">Ver</a></td>';
+                    html += '</tr>';
+                }});
+            }}
+        }}
+        
+        html += '</tbody></table></div>';
+    }} else {{
+        html += '<div class="no-items">Nenhum item encontrado ainda para esta categoria</div>';
+    }}
+    
+    detailsElem.innerHTML = html;
 }}
 </script>
 
