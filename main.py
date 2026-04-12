@@ -157,12 +157,13 @@ class AuctionAgent:
 
     def start(self):
         logger.info("Iniciando servicos do agente...")
-        self.bot.start_polling()
+        # NAO usar polling - usamos webhook via Flask route /webhook
+        # self.bot.start_polling()  # REMOVIDO: conflita com webhook
         self.agenda.start()
         self.post_auction.start()
         monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         monitor_thread.start()
-        logger.info("Todos os servicos iniciados com sucesso.")
+        logger.info("Todos os servicos iniciados com sucesso (modo webhook).")
 
     def _monitoring_loop(self):
         logger.info(f"Iniciando loop de monitoramento (intervalo: {config.CHECK_INTERVAL}s)")
@@ -513,7 +514,7 @@ def scan_now():
         def run_manual_scan():
             try:
                 # Executa um ciclo de busca
-                agent.run_cycle()
+                agent._run_scrapers()
                 logger.info("Varredura manual concluida com sucesso")
             except Exception as e:
                 logger.error(f"Erro durante varredura manual: {e}")
