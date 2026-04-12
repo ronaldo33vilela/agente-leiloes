@@ -1,4 +1,5 @@
 from .base_scraper import BaseScraper, logger
+from .auction_utils import should_include_item
 import re
 
 class JJKaneScraper(BaseScraper):
@@ -9,6 +10,7 @@ class JJKaneScraper(BaseScraper):
     Estratégia:
     1. Tenta múltiplas URLs de busca com requests
     2. Parsing HTML dos resultados
+    3. Filtra apenas leilões ATIVOS (ignora closed/ended/sold)
     """
     
     def __init__(self):
@@ -35,7 +37,7 @@ class JJKaneScraper(BaseScraper):
                 logger.error(f"Erro ao buscar em {url}: {e}")
                 continue
         
-        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
+        logger.info(f"Nenhum resultado ATIVO encontrado no {self.site_name} para '{keyword}'")
         return []
     
     def _search_url(self, url, params, keyword):
@@ -67,12 +69,19 @@ class JJKaneScraper(BaseScraper):
                     href = link_elem.get('href', '')
                     if href in processed:
                         continue
-                    processed.add(href)
                     
                     # Extrai título de múltiplas fontes
                     title = self._extract_title(link_elem)
                     if not title or len(title) < 3:
                         continue
+                    
+                    # Filtra apenas leilões ativos
+                    element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                    if not should_include_item(element_context, title):
+                        logger.debug(f"Item descartado (leilão finalizado): {title}")
+                        continue
+                    
+                    processed.add(href)
                     
                     # Busca preço no contexto
                     price = self._extract_price(link_elem)
@@ -98,7 +107,7 @@ class JJKaneScraper(BaseScraper):
         if not results:
             results = self._generic_search(soup, keyword)
         
-        logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
+        logger.info(f"Encontrados {len(results)} itens ATIVOS no {self.site_name} para '{keyword}'")
         return results
     
     def _generic_search(self, soup, keyword):
@@ -120,6 +129,12 @@ class JJKaneScraper(BaseScraper):
                 if href.startswith('#') or href.startswith('javascript:'):
                     continue
                 if keyword.lower() not in text.lower() and keyword.lower() not in href.lower():
+                    continue
+                
+                # Filtra apenas leilões ativos
+                element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                if not should_include_item(element_context, text):
+                    logger.debug(f"Item descartado (leilão finalizado): {text}")
                     continue
                 
                 processed.add(href)
