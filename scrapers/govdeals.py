@@ -1,5 +1,6 @@
 from .base_scraper import BaseScraper, logger
 from .auction_utils import should_include_item
+from .relevance_filter import filter_items
 import re
 import json
 
@@ -100,6 +101,8 @@ class GovDealsScraper(BaseScraper):
                 except Exception as e:
                     logger.error(f"Erro ao processar item da API: {e}")
             
+            # Filtrar por relevância
+            results = filter_items(results, keyword, min_score=0.5)
             logger.info(f"API encontrou {len(results)} itens ATIVOS no {self.site_name} para '{keyword}'")
             return results
             
@@ -156,6 +159,8 @@ class GovDealsScraper(BaseScraper):
             except Exception as e:
                 logger.error(f"Erro no scraping HTML: {e}")
                 
+        # Filtrar por relevância
+        results = filter_items(results, keyword, min_score=0.5)
         logger.info(f"HTML encontrou {len(results)} itens ATIVOS no {self.site_name}")
         return results
     
