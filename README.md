@@ -1,41 +1,47 @@
-# 🤖 Agente Inteligente de Leilões Americanos
+# Agente Inteligente de Leiloes Americanos
 
-Um sistema completo em Python para monitorar sites de leilão americanos, analisar oportunidades com Inteligência Artificial e gerenciar todo o ciclo de vida do lote (da arrematação à revenda) via Telegram.
+Um sistema completo em Python para monitorar sites de leilao americanos, analisar oportunidades com Inteligencia Artificial e gerenciar todo o ciclo de vida do lote (da arrematacao a revenda) via Telegram.
 
-## 🌟 Funcionalidades
+**Versao 2.0 - Otimizada para Render Free (512MB RAM) - Sem Selenium**
+
+## Funcionalidades
 
 ### 1. Monitoramento Inteligente
-- **Scraping Automático:** Monitora 5 sites (GovDeals, Public Surplus, BidSpotter, AVGear, JJ Kane)
-- **Análise com IA:** Usa GPT-4.1-mini para identificar o item, estimar valor de mercado e calcular margem de lucro
-- **Alertas no Telegram:** Envia notificações apenas para "Ótimas" ou "Boas" oportunidades
-- **Prevenção de Duplicatas:** Banco de dados SQLite garante que você não receba o mesmo alerta duas vezes
+- **Scraping Automatico:** Monitora 5 sites (GovDeals, Public Surplus, BidSpotter, AVGear, JJ Kane)
+- **Leve e Rapido:** Usa apenas `requests` + `BeautifulSoup` (sem Selenium/Chrome)
+- **Analise com IA:** Usa GPT-4.1-mini para identificar o item, estimar valor de mercado e calcular margem de lucro
+- **Alertas no Telegram:** Envia notificacoes apenas para "Otimas" ou "Boas" oportunidades
+- **Prevencao de Duplicatas:** Banco de dados SQLite garante que voce nao receba o mesmo alerta duas vezes
 
 ### 2. Agenda e Lembretes
-- **Agendamento:** Registre leilões de interesse com data, hora e lance mínimo
-- **Lembretes Automáticos:** Receba alertas no Telegram 24h, 1h e 15m antes do leilão começar
+- **Agendamento:** Registre leiloes de interesse com data, hora e lance minimo
+- **Lembretes Automaticos:** Receba alertas no Telegram 24h, 1h e 15m antes do leilao comecar
 
-### 3. Pós-Arrematação e Logística
-- **Registro de Lotes:** Registre itens ganhos com valor pago e localização
-- **Gestão de Frete:** Adicione transportadora e código de rastreio
-- **Rastreamento:** Acompanhe o status dos itens em trânsito
+### 3. Pos-Arrematacao e Logistica
+- **Registro de Lotes:** Registre itens ganhos com valor pago e localizacao
+- **Gestao de Frete:** Adicione transportadora e codigo de rastreio
+- **Rastreamento:** Acompanhe o status dos itens em transito
 
 ### 4. Estoque e Vendas
-- **Controle de Estoque:** Mova itens entregues para o estoque com preço sugerido de revenda
+- **Controle de Estoque:** Mova itens entregues para o estoque com preco sugerido de revenda
 - **Registro de Vendas:** Marque itens como vendidos e registre o valor final
 - **Dashboard Financeiro:** Acompanhe total investido, total em vendas e lucro acumulado
 
-## 🛠️ Instalação Local
+## Instalacao Local
 
-1. **Clone o repositório ou baixe os arquivos**
+1. **Clone o repositorio:**
+   ```bash
+   git clone https://github.com/ronaldo33vilela/agente-leiloes.git
+   cd agente-leiloes
+   ```
 
-2. **Instale as dependências:**
+2. **Instale as dependencias:**
    ```bash
    pip install -r requirements.txt
    ```
-   *Nota: O sistema usa Selenium para sites que carregam conteúdo via JavaScript. Certifique-se de ter o Google Chrome instalado no seu sistema.*
 
-3. **Configure as variáveis de ambiente:**
-   Edite o arquivo `config.py` ou defina as variáveis de ambiente:
+3. **Configure as variaveis de ambiente:**
+   Edite o arquivo `config.py` ou defina as variaveis de ambiente:
    - `TELEGRAM_TOKEN`: Token do seu bot (obtido no @BotFather)
    - `TELEGRAM_CHAT_ID`: Seu ID do Telegram (obtido no @userinfobot)
    - `OPENAI_API_KEY`: Sua chave da API da OpenAI
@@ -48,52 +54,91 @@ Um sistema completo em Python para monitorar sites de leilão americanos, analis
    python main.py
    ```
 
-## 📱 Comandos do Telegram
+## Comandos do Telegram
 
 Envie `/help` para o seu bot para ver a lista completa de comandos:
 
 **Monitoramento:**
-- `/agendar` - Registra um leilão na agenda
-- `/agenda` - Lista todos os leilões agendados
-- `/cancelar [ID]` - Remove um leilão da agenda
+- `/buscar [termo]` - Busca manual nos sites
 
-**Pós-Arrematação:**
+**Agenda:**
+- `/agendar` - Registra um leilao na agenda
+- `/agenda` - Lista todos os leiloes agendados
+- `/cancelar [ID]` - Remove um leilao da agenda
+
+**Pos-Arrematacao:**
 - `/ganhou` - Registra um lote arrematado
 - `/frete [ID]` - Registra frete/transportadora
-- `/rastrear` - Consulta status de itens em trânsito
-- `/entregue [ID]` - Marca item como entregue e move para estoque
+- `/rastrear` - Consulta status de itens em transito
+- `/entregue [ID]` - Marca item como entregue
 
 **Estoque e Vendas:**
-- `/estoque` - Lista itens disponíveis para venda
+- `/estoque` - Lista itens disponiveis para venda
 - `/vender [ID] [Valor]` - Marca um item como vendido
 - `/dashboard` - Resumo completo de investimentos e lucros
 
-## 🚀 Deploy Gratuito 24/7 (Render / Railway)
+## Deploy Gratuito 24/7 no Render.com
 
-Para manter o bot rodando 24 horas por dia sem precisar deixar seu computador ligado:
+### Passo a Passo
 
-### Opção 1: Render.com (Recomendado)
 1. Crie uma conta no [Render](https://render.com)
-2. Conecte seu GitHub e crie um novo "Background Worker"
-3. Selecione o repositório com este código
-4. Configurações:
+2. Conecte seu GitHub e crie um novo **Web Service**
+3. Selecione o repositorio com este codigo
+4. Configuracoes:
    - **Environment:** Python 3
-   - **Build Command:** `pip install -r requirements.txt && apt-get update && apt-get install -y wget gnupg && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && apt-get update && apt-get install -y google-chrome-stable`
-   - **Start Command:** `python main.py`
-5. Adicione as variáveis de ambiente (Environment Variables):
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn main:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120`
+   - **Instance Type:** Free
+5. Adicione as variaveis de ambiente (Environment Variables):
    - `TELEGRAM_TOKEN`
    - `TELEGRAM_CHAT_ID`
    - `OPENAI_API_KEY`
-6. Clique em "Create Background Worker"
+   - `CHECK_INTERVAL` (opcional, padrao: 3600)
+6. Clique em **Create Web Service**
 
-### Opção 2: Railway.app
-1. Crie uma conta no [Railway](https://railway.app)
-2. Clique em "New Project" > "Deploy from GitHub repo"
-3. Adicione as variáveis de ambiente na aba "Variables"
-4. O Railway detectará automaticamente o `requirements.txt` e fará o deploy.
-   *Nota: Para o Selenium funcionar no Railway, você precisará adicionar um `nixpacks.toml` ou `Dockerfile` configurando o Chrome.*
+### Por que Web Service e nao Background Worker?
 
-## ⚠️ Limitações e Avisos
-- **Bloqueios de IP:** Sites de leilão podem bloquear IPs de servidores em nuvem. Se os scrapers pararem de retornar resultados, considere usar proxies residenciais.
-- **Mudanças de Layout:** Se os sites mudarem sua estrutura HTML, os scrapers precisarão ser atualizados.
-- **Custos da API:** A análise usa a API da OpenAI, que tem custos associados (embora o modelo gpt-4.1-mini seja muito barato).
+O plano gratuito do Render desliga Background Workers apos inatividade. Usando um Web Service com Flask, o servico permanece ativo respondendo health checks, enquanto o monitoramento roda em threads de background.
+
+## Otimizacoes de Memoria (v2.0)
+
+| Mudanca | Antes | Depois |
+|---------|-------|--------|
+| Scraping | Selenium + Chrome (~300MB) | requests + BeautifulSoup (~20MB) |
+| Scrapers | Todos instanciados na RAM | Instanciados sob demanda e destruidos |
+| Logging | Arquivo + Console | Apenas Console (economiza disco) |
+| Web Server | Nenhum | Flask leve para health check |
+| Coleta de lixo | Automatica | Forcada apos cada rodada |
+
+## Limitacoes e Avisos
+
+- **Sites SPA:** Alguns sites (como GovDeals) usam Angular/React e podem retornar menos resultados sem JavaScript. Os scrapers tentam APIs internas e endpoints alternativos para compensar.
+- **Bloqueios de IP:** Sites de leilao podem bloquear IPs de servidores em nuvem. Se os scrapers pararem de retornar resultados, considere usar proxies residenciais.
+- **Mudancas de Layout:** Se os sites mudarem sua estrutura HTML, os scrapers precisarao ser atualizados.
+- **Custos da API:** A analise usa a API da OpenAI, que tem custos associados (embora o modelo gpt-4.1-mini seja muito barato).
+
+## Estrutura do Projeto
+
+```
+agente-leiloes/
+├── main.py                 # Ponto de entrada (Flask + Agente)
+├── config.py               # Configuracoes e variaveis de ambiente
+├── requirements.txt        # Dependencias (sem Selenium!)
+├── test_scrapers.py        # Script de teste dos scrapers
+├── README.md               # Este arquivo
+├── modules/
+│   ├── __init__.py
+│   ├── analyzer.py         # Analise com OpenAI GPT-4.1-mini
+│   ├── database.py         # Camada de dados SQLite
+│   ├── telegram_bot.py     # Bot do Telegram (comandos)
+│   ├── agenda.py           # Gerenciador de agenda/lembretes
+│   └── post_auction.py     # Gerenciador de pos-arrematacao
+└── scrapers/
+    ├── __init__.py
+    ├── base_scraper.py     # Classe base (requests + BS4)
+    ├── govdeals.py         # Scraper GovDeals
+    ├── publicsurplus.py    # Scraper Public Surplus
+    ├── bidspotter.py       # Scraper BidSpotter
+    ├── avgear.py           # Scraper AVGear (Shopify)
+    └── jjkane.py           # Scraper JJ Kane
+```
