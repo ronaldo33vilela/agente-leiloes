@@ -237,7 +237,7 @@ class AuctionTelegramBot:
                     self.bot.reply_to(message, f"❌ Item {item_id} não encontrado nos lotes ganhos.")
             except (IndexError, ValueError):
                 self.bot.reply_to(message, "❌ Formato incorreto. Use: /entregue [ID]")
-                
+            
         # ==========================================
         # COMANDO /estoque
         # ==========================================
