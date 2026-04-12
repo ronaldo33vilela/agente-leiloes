@@ -1,5 +1,6 @@
 from .base_scraper import BaseScraper, logger
 from .auction_utils import should_include_item
+from .relevance_filter import filter_items
 import re
 import json
 
@@ -76,6 +77,8 @@ class BidSpotterScraper(BaseScraper):
                             })
                     
                     if results:
+                        # Filtrar por relevância
+                        results = filter_items(results, keyword, min_score=0.5)
                         logger.info(f"API encontrou {len(results)} itens ATIVOS no {self.site_name}")
                         return results
             except Exception:
@@ -152,6 +155,8 @@ class BidSpotterScraper(BaseScraper):
                         continue
             
             if results:
+                # Filtrar por relevância
+                results = filter_items(results, keyword, min_score=0.5)
                 logger.info(f"HTML encontrou {len(results)} itens ATIVOS no {self.site_name}")
                 return results
         
