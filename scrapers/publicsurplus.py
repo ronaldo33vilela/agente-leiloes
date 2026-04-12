@@ -1,7 +1,6 @@
 from .base_scraper import BaseScraper, logger
 import re
 import urllib3
-import ssl
 
 # Desabilita avisos de SSL inseguro
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -9,49 +8,21 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class PublicSurplusScraper(BaseScraper):
     """
     Scraper para o site Public Surplus.
-    O site pode ter problemas de SSL, então usamos configurações especiais.
+    Usa requests + BeautifulSoup (sem Selenium).
+    O site pode ter problemas de SSL, então usamos verify=False.
     """
     
     def __init__(self):
         super().__init__("Public Surplus")
         self.base_url = "https://www.publicsurplus.com"
-        self.driver = None
-        
-    def _init_driver(self):
-        """Inicializa o Selenium WebDriver."""
-        if self.driver:
-            return
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--ignore-certificate-errors')
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-            
-            self.driver = webdriver.Chrome(options=options)
-            self.driver.set_page_load_timeout(30)
-            logger.info("Selenium WebDriver inicializado para Public Surplus.")
-        except Exception as e:
-            logger.error(f"Erro ao inicializar Selenium para Public Surplus: {e}")
-            self.driver = None
         
     def search(self, keyword):
-        """Busca itens no Public Surplus."""
+        """Busca itens no Public Surplus usando requests."""
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
-        # Tenta primeiro com requests (mais rápido)
         results = self._search_requests(keyword)
-        if results:
-            return results
-            
-        # Fallback para Selenium
-        return self._search_selenium(keyword)
+        logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
+        return results
         
     def _search_requests(self, keyword):
         """Busca usando requests com tratamento especial de SSL."""
@@ -62,8 +33,8 @@ class PublicSurplusScraper(BaseScraper):
         }
         
         try:
-            # Tenta com verificação SSL desabilitada
-            response = self.session.get(search_url, params=params, timeout=15, verify=False)
+            # Tenta com verificação SSL desabilitada (site tem problemas de certificado)
+            response = self.session.get(search_url, params=params, timeout=20, verify=False)
             response.raise_for_status()
         except Exception as e:
             logger.error(f"Erro ao acessar {self.site_name}: {e}")
@@ -71,33 +42,11 @@ class PublicSurplusScraper(BaseScraper):
             
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
+        del response
         
-        return self._parse_results(soup)
+        return self._parse_results(soup, keyword)
         
-    def _search_selenium(self, keyword):
-        """Busca usando Selenium (fallback para problemas de SSL)."""
-        self._init_driver()
-        if not self.driver:
-            return []
-            
-        try:
-            import time
-            from selenium.webdriver.common.by import By
-            
-            search_url = f"{self.base_url}/sms/browse/search?posting=y&keyword={keyword.replace(' ', '+')}"
-            self.driver.get(search_url)
-            time.sleep(5)
-            
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-            
-            return self._parse_results(soup)
-            
-        except Exception as e:
-            logger.error(f"Erro no Selenium para {self.site_name}: {e}")
-            return []
-        
-    def _parse_results(self, soup):
+    def _parse_results(self, soup, keyword=""):
         """Extrai resultados do HTML do Public Surplus."""
         results = []
         processed_ids = set()
@@ -157,12 +106,4 @@ class PublicSurplusScraper(BaseScraper):
             except Exception as e:
                 logger.error(f"Erro ao processar item no {self.site_name}: {e}")
                 
-        logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
         return results
-        
-    def __del__(self):
-        if self.driver:
-            try:
-                self.driver.quit()
-            except:
-                pass
