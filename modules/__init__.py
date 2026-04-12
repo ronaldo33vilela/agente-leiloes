@@ -1,1 +1,1 @@
-# Pacote de scrapers
+# Pacote de módulos
