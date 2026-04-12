@@ -1,4 +1,5 @@
 from .base_scraper import BaseScraper, logger
+from .auction_utils import should_include_item
 import re
 import json
 
@@ -10,6 +11,7 @@ class BidSpotterScraper(BaseScraper):
     Estratégia:
     1. Tenta a API interna de busca do BidSpotter (JSON)
     2. Fallback para scraping HTML da página de busca
+    3. Filtra apenas leilões ATIVOS (ignora closed/ended/sold)
     """
     
     def __init__(self):
@@ -54,6 +56,12 @@ class BidSpotterScraper(BaseScraper):
                         link = item.get('url', item.get('link', ''))
                         price = item.get('price', item.get('currentBid', 'Consultar no site'))
                         item_id = item.get('id', str(hash(link) % 100000))
+                        status = item.get('status', '').lower()
+                        
+                        # Filtra apenas leilões ativos
+                        if status in ['closed', 'ended', 'sold', 'completed', 'expired']:
+                            logger.debug(f"Item descartado (status={status}): {title}")
+                            continue
                         
                         if title and link:
                             if not link.startswith('http'):
@@ -68,7 +76,7 @@ class BidSpotterScraper(BaseScraper):
                             })
                     
                     if results:
-                        logger.info(f"API encontrou {len(results)} itens no {self.site_name}")
+                        logger.info(f"API encontrou {len(results)} itens ATIVOS no {self.site_name}")
                         return results
             except Exception:
                 pass
@@ -113,11 +121,18 @@ class BidSpotterScraper(BaseScraper):
                         href = link_elem.get('href', '')
                         if href in processed:
                             continue
-                        processed.add(href)
                         
                         title = link_elem.text.strip() or link_elem.get('title', '')
                         if not title or len(title) < 3:
                             continue
+                        
+                        # Filtra apenas leilões ativos
+                        element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                        if not should_include_item(element_context, title):
+                            logger.debug(f"Item descartado (leilão finalizado): {title}")
+                            continue
+                        
+                        processed.add(href)
                         
                         # Busca preço no contexto
                         price = self._extract_price(link_elem)
@@ -137,10 +152,10 @@ class BidSpotterScraper(BaseScraper):
                         continue
             
             if results:
-                logger.info(f"HTML encontrou {len(results)} itens no {self.site_name}")
+                logger.info(f"HTML encontrou {len(results)} itens ATIVOS no {self.site_name}")
                 return results
         
-        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
+        logger.info(f"Nenhum resultado ATIVO encontrado no {self.site_name} para '{keyword}'")
         return []
     
     def _extract_price(self, element):
