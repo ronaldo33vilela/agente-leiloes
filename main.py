@@ -1130,7 +1130,7 @@ a:hover{{text-decoration:underline}}
         <span>|</span>
         <span>Auto-refresh: 60s</span>
         <span>|</span>
-        <button onclick="clearAllData()" style="background:#f85149;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.2s" onmouseover="this.style.background='#da3633'" onmouseout="this.style.background='#f85149'">Limpar Dados</button>
+        <button onclick="clearAllData(event)" style="background:#f85149;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.2s" onmouseover="this.style.background='#da3633'" onmouseout="this.style.background='#f85149'">Limpar Dados</button>
     </div>
 </div>
 
@@ -1445,23 +1445,34 @@ function searchPlatform(platform) {{
     }}
 }}
 
-function clearAllData() {{
+function clearAllData(event) {{
     if (!confirm('Tem certeza que deseja limpar TODOS os dados? Esta acao nao pode ser desfeita!')) {{
         return;
     }}
     
-    var btn = event.target;
+    var btn = event.currentTarget || event.target;
+    if (!btn) {{
+        alert('Erro: botao nao encontrado');
+        return;
+    }}
     btn.disabled = true;
     btn.textContent = 'Limpando...';
+    
+    console.log('Iniciando limpeza de dados...');
     
     fetch('/api/clear-data', {{
         method: 'POST',
         headers: {{'Content-Type': 'application/json'}}
     }})
     .then(function(response) {{
+        console.log('Resposta HTTP:', response.status);
+        if (!response.ok) {{
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }}
         return response.json();
     }})
     .then(function(data) {{
+        console.log('Dados retornados:', data);
         if (data.status === 'success') {{
             alert('Dados limpos com sucesso! O dashboard sera atualizado em 3 segundos...');
             window.categoryDataCache = {{}};
@@ -1475,6 +1486,7 @@ function clearAllData() {{
         }}
     }})
     .catch(function(error) {{
+        console.error('Erro na requisicao:', error);
         alert('Erro ao limpar dados: ' + error.message);
         btn.disabled = false;
         btn.textContent = 'Limpar Dados';
