@@ -627,6 +627,68 @@ class AuctionTelegramBot:
             return None, 0
 
     # ==========================================
+    # COMANDO /buscar
+    # ==========================================
+    def handle_search_command(self, search_term):
+        """
+        Busca um termo em TODAS as 5 plataformas e retorna resultados.
+        Retorna lista de dicts com: title, site, link, price, relevance_score
+        """
+        if not search_term or len(search_term.strip()) == 0:
+            return None, "Uso: /buscar TERMO\nExemplo: /buscar golf cart"
+        
+        try:
+            from scrapers.govdeals import GovDealsScraper
+            from scrapers.bidspotter import BidSpotterScraper
+            from scrapers.publicsurplus import PublicSurplusScraper
+            from scrapers.jjkane import JJKaneScraper
+            from scrapers.avgear import AVGearScraper
+            from scrapers.relevance_filter import filter_items
+            
+            all_results = []
+            
+            # Busca em cada plataforma
+            scrapers = [
+                (GovDealsScraper(), 'GovDeals'),
+                (BidSpotterScraper(), 'BidSpotter'),
+                (PublicSurplusScraper(), 'Public Surplus'),
+                (JJKaneScraper(), 'JJ Kane'),
+                (AVGearScraper(), 'AVGear'),
+            ]
+            
+            logger.info(f"Iniciando busca por: {search_term}")
+            
+            for scraper, site_name in scrapers:
+                try:
+                    logger.debug(f"Buscando em {site_name}...")
+                    results = scraper.search(search_term)
+                    if results:
+                        all_results.extend(results)
+                        logger.debug(f"{site_name}: {len(results)} resultados encontrados")
+                except Exception as e:
+                    logger.warning(f"Erro ao buscar em {site_name}: {e}")
+                    continue
+            
+            if not all_results:
+                return None, f"Nenhum resultado encontrado para: <b>{search_term}</b>"
+            
+            # Aplica filtro de relevância novamente para garantir qualidade
+            filtered = filter_items(all_results, search_term, min_score=0.5)
+            
+            if not filtered:
+                return None, f"Nenhum resultado relevante encontrado para: <b>{search_term}</b>"
+            
+            # Limita a 10 resultados para nao estourar tamanho de mensagem
+            filtered = filtered[:10]
+            
+            logger.info(f"Busca concluida: {len(filtered)} resultados relevantes")
+            return filtered, None
+            
+        except Exception as e:
+            logger.error(f"Erro ao executar busca: {e}")
+            return None, f"Erro ao executar busca: {str(e)}"
+
+    # ==========================================
     # METODOS DE ENVIO DE MENSAGENS
     # ==========================================
     def send_alert(self, item, analysis):
