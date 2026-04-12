@@ -9,13 +9,11 @@ import re
 import sqlite3
 from datetime import datetime
 
-# Configuração de logging (sem arquivo para economizar disco no Render)
+# Configuracao de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger('Main')
 
@@ -26,20 +24,17 @@ from modules.analyzer import AuctionAnalyzer
 from modules.agenda import AgendaManager
 from modules.post_auction import PostAuctionManager
 
-# Importa os scrapers
 from scrapers.govdeals import GovDealsScraper
 from scrapers.publicsurplus import PublicSurplusScraper
 from scrapers.bidspotter import BidSpotterScraper
 from scrapers.avgear import AVGearScraper
 from scrapers.jjkane import JJKaneScraper
 
-# Flask para manter o serviço ativo no Render (plano gratuito requer porta HTTP)
 from flask import Flask, jsonify
-
 app = Flask(__name__)
 
 # ==========================================
-# REGISTRO DE LOGS EM MEMÓRIA (para o dashboard)
+# REGISTRO DE LOGS EM MEMORIA (para o dashboard)
 # ==========================================
 MAX_LOG_ENTRIES = 200
 _log_buffer = []
@@ -47,8 +42,6 @@ _log_lock = threading.Lock()
 
 
 class DashboardLogHandler(logging.Handler):
-    """Handler que armazena logs em memória para exibição no dashboard."""
-
     def emit(self, record):
         try:
             entry = {
@@ -65,15 +58,12 @@ class DashboardLogHandler(logging.Handler):
             pass
 
 
-# Adiciona o handler de dashboard ao root logger
 _dashboard_handler = DashboardLogHandler()
 _dashboard_handler.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
 logging.getLogger().addHandler(_dashboard_handler)
 
-# Timestamp de inicialização
 _start_time = datetime.now()
 
-# Contadores globais de atividade
 _activity_counters = {
     "cycles_completed": 0,
     "items_found_total": 0,
@@ -86,34 +76,23 @@ _counters_lock = threading.Lock()
 
 
 class SearchRotator:
-    """Gerencia a rotação de termos de busca entre ciclos.
-
-    A cada ciclo (1 hora), seleciona um subconjunto de termos respeitando
-    a ordem de prioridade (A -> B -> C) e rotaciona para o próximo bloco
-    na hora seguinte. Isso distribui a carga e evita sobrecarregar os
-    sites de leilão.
-    """
+    """Gerencia a rotacao de termos de busca entre ciclos."""
 
     STATE_FILE = os.path.join(os.path.dirname(__file__), "database", "rotation_state.json")
 
     def __init__(self):
-        # Monta a fila completa de (categoria, termo) na ordem de prioridade
         self._queue = []
         for _priority_label, category_list in config.ALL_PRIORITY_GROUPS:
             for category in category_list:
                 terms = config.SEARCH_TERMS.get(category, [])
                 for term in terms:
                     self._queue.append((category, term))
-
         self._offset = self._load_offset()
         logger.info(
             f"SearchRotator inicializado: {len(self._queue)} termos totais, "
             f"offset atual={self._offset}, termos/ciclo={config.TERMS_PER_CYCLE}"
         )
 
-    # ------------------------------------------------------------------
-    # Persistência do offset (sobrevive a reinícios do Render)
-    # ------------------------------------------------------------------
     def _load_offset(self):
         try:
             if os.path.exists(self.STATE_FILE):
@@ -132,25 +111,17 @@ class SearchRotator:
         except Exception as e:
             logger.warning(f"Nao foi possivel salvar estado de rotacao: {e}")
 
-    # ------------------------------------------------------------------
-    # Seleção do bloco de termos para o ciclo atual
-    # ------------------------------------------------------------------
     def next_batch(self):
-        """Retorna uma lista de tuplas (category, term) para o ciclo atual."""
         total = len(self._queue)
         if total == 0:
             return []
-
         batch_size = min(config.TERMS_PER_CYCLE, total)
         batch = []
         for i in range(batch_size):
             idx = (self._offset + i) % total
             batch.append(self._queue[idx])
-
-        # Avança o offset para o próximo ciclo
         self._offset = (self._offset + batch_size) % total
         self._save_offset()
-
         categories_in_batch = set(cat for cat, _ in batch)
         logger.info(
             f"Ciclo de busca: {batch_size} termos de {len(categories_in_batch)} categorias "
@@ -160,26 +131,16 @@ class SearchRotator:
 
 
 class AuctionAgent:
-    """Agente principal que coordena todos os módulos.
-    Otimizado para Render Free (512MB RAM) — sem Selenium.
-    """
+    """Agente principal que coordena todos os modulos."""
 
     def __init__(self):
-        logger.info("Inicializando Agente de Leiloes (modo leve — sem Selenium)...")
-
-        # Inicializa banco de dados
+        logger.info("Inicializando Agente de Leiloes (modo leve)...")
         database.init_db()
-
-        # Inicializa módulos
         self.bot = AuctionTelegramBot()
         self.analyzer = AuctionAnalyzer()
         self.agenda = AgendaManager(self.bot)
         self.post_auction = PostAuctionManager(self.bot)
-
-        # Rotação de termos de busca
         self.rotator = SearchRotator()
-
-        # Scrapers são instanciados sob demanda para economizar memória
         self._scraper_classes = [
             GovDealsScraper,
             PublicSurplusScraper,
@@ -189,28 +150,16 @@ class AuctionAgent:
         ]
 
     def start(self):
-        """Inicia o agente e todos os seus serviços."""
         logger.info("Iniciando servicos do agente...")
-
-        # Inicia o bot do Telegram
         self.bot.start_polling()
-
-        # Inicia o gerenciador de agenda
         self.agenda.start()
-
-        # Inicia o gerenciador de pós-arrematação
         self.post_auction.start()
-
-        # Inicia loop de monitoramento em thread separada
         monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         monitor_thread.start()
-
         logger.info("Todos os servicos iniciados com sucesso.")
 
     def _monitoring_loop(self):
-        """Loop principal que executa os scrapers periodicamente."""
         logger.info(f"Iniciando loop de monitoramento (intervalo: {config.CHECK_INTERVAL}s)")
-
         while True:
             try:
                 self._run_scrapers()
@@ -221,72 +170,49 @@ class AuctionAgent:
                 logger.error(f"Erro no loop de monitoramento: {e}")
                 with _counters_lock:
                     _activity_counters["errors_count"] += 1
-
-            # Força coleta de lixo após cada rodada
             gc.collect()
-
             logger.info(f"Aguardando {config.CHECK_INTERVAL} segundos para a proxima verificacao...")
             time.sleep(config.CHECK_INTERVAL)
 
     def _run_scrapers(self):
-        """Executa os scrapers para o bloco de termos do ciclo atual.
-
-        Usa o SearchRotator para obter o subconjunto de termos e itera
-        sobre cada scraper, respeitando o delay entre requisições.
-        """
         batch = self.rotator.next_batch()
         if not batch:
             logger.warning("Nenhum termo de busca configurado.")
             return
-
         logger.info(f"Iniciando rodada de scraping com {len(batch)} termos...")
         total_found = 0
-
         with _counters_lock:
             _activity_counters["items_found_this_cycle"] = 0
-
         for category, keyword in batch:
             for scraper_class in self._scraper_classes:
                 scraper = None
                 try:
-                    # Instancia o scraper sob demanda
                     scraper = scraper_class()
-
-                    # Busca itens
                     items = scraper.search(keyword)
-
-                    # Processa cada item encontrado
                     for item in items:
-                        # Adiciona metadados de categoria e prioridade
                         item["category"] = category
                         item["priority"] = self._get_priority(category)
+                        item["keyword"] = keyword
                         self._process_item(item, category)
                         total_found += 1
-
                 except Exception as e:
                     site_name = scraper.site_name if scraper else scraper_class.__name__
                     logger.error(f"Erro ao executar scraper {site_name} para '{keyword}': {e}")
                     with _counters_lock:
                         _activity_counters["errors_count"] += 1
                 finally:
-                    # Libera o scraper da memória
                     if scraper:
                         scraper.session.close()
                         del scraper
                     gc.collect()
-
-                # Delay entre requisições para evitar bloqueio
                 time.sleep(config.REQUEST_DELAY)
-
         with _counters_lock:
             _activity_counters["items_found_total"] += total_found
             _activity_counters["items_found_this_cycle"] = total_found
-
         logger.info(f"Rodada concluida: {total_found} itens encontrados no total.")
 
     @staticmethod
     def _get_priority(category):
-        """Retorna a letra de prioridade (A/B/C) de uma categoria."""
         if category in config.PRIORITY_A:
             return "A"
         if category in config.PRIORITY_B:
@@ -296,14 +222,11 @@ class AuctionAgent:
         return "C"
 
     def _process_item(self, item, category):
-        """Processa um item encontrado, analisa e envia alerta se necessário."""
         item_id = item["id"]
-
-        # Verifica se já foi notificado
         if database.is_item_notified(item_id):
             return
 
-        # Filtra por preço máximo da categoria (se o preço for legível)
+        # Filtra por preco maximo da categoria
         max_price = config.MAX_PRICE.get(category)
         if max_price and item.get("price"):
             numeric_price = self._parse_price(item["price"])
@@ -321,27 +244,43 @@ class AuctionAgent:
             title=item["title"],
             price=item["price"],
             site=item["site"],
-            keyword=item["keyword"],
+            keyword=item.get("keyword", ""),
         )
 
-        # Se a recomendação for boa, envia alerta
+        # Comparacao com historico de precos
+        try:
+            numeric_price = self._parse_price(item.get("price", "0")) or 0
+            history_comparison = self.post_auction.compare_with_history(item["title"], numeric_price)
+            if history_comparison:
+                analysis["history_comparison"] = history_comparison
+        except Exception:
+            pass
+
+        # Se a recomendacao for boa, envia alerta
         if analysis.get("recommendation") in ["OTIMA OPORTUNIDADE", "BOA OPORTUNIDADE"]:
             self.bot.send_alert(item, analysis)
             with _counters_lock:
                 _activity_counters["alerts_sent"] += 1
 
-        # Marca como notificado para não enviar novamente
+        # Marca como notificado
         database.mark_item_notified(
             item_id=item_id,
             site=item["site"],
             title=item["title"],
             link=item["link"],
             price=item["price"],
+            keyword=item.get("keyword", ""),
+            category=category,
         )
+
+        # Registra no historico de precos
+        try:
+            self.post_auction.collect_notified_item_price(item)
+        except Exception:
+            pass
 
     @staticmethod
     def _parse_price(price_str):
-        """Extrai valor numérico de uma string de preço."""
         if not price_str or price_str == "Consultar no site":
             return None
         match = re.search(r'[\d,]+\.?\d*', str(price_str).replace(",", ""))
@@ -354,19 +293,18 @@ class AuctionAgent:
 
 
 # ==========================================
-# ROTAS FLASK (para manter o Render ativo)
+# ROTAS FLASK
 # ==========================================
 agent = None
 
 
 @app.route("/")
 def home():
-    """Rota principal — health check."""
     total_terms = sum(len(v) for v in config.SEARCH_TERMS.values())
     return jsonify({
         "status": "running",
-        "service": "Agente de Leiloes Americanos",
-        "version": "4.0-dashboard",
+        "service": "Agente de Leiloes R33",
+        "version": "5.0-gestao-completa",
         "memory_mode": "optimized (no Selenium)",
         "total_search_terms": total_terms,
         "categories": len(config.SEARCH_TERMS),
@@ -378,13 +316,11 @@ def home():
 
 @app.route("/health")
 def health():
-    """Health check para o Render."""
     return jsonify({"status": "healthy"}), 200
 
 
 @app.route("/stats")
 def stats():
-    """Retorna estatísticas do agente."""
     try:
         stats_data = database.get_dashboard_stats()
         return jsonify({"status": "ok", "stats": stats_data})
@@ -394,7 +330,6 @@ def stats():
 
 @app.route("/categories")
 def categories():
-    """Lista todas as categorias e quantidade de termos."""
     cat_info = {}
     for cat, terms in config.SEARCH_TERMS.items():
         priority = "A" if cat in config.PRIORITY_A else "B" if cat in config.PRIORITY_B else "C"
@@ -410,12 +345,86 @@ def categories():
     })
 
 
+@app.route("/api/category/<category_name>")
+def api_category(category_name):
+    try:
+        if category_name not in config.SEARCH_TERMS:
+            return jsonify({"error": "Categoria nao encontrada"}), 404
+        terms = config.SEARCH_TERMS[category_name]
+        priority = "A" if category_name in config.PRIORITY_A else "B" if category_name in config.PRIORITY_B else "C"
+        max_price = config.MAX_PRICE.get(category_name, "N/A")
+        items_by_term = {}
+        try:
+            db_path = config.DB_PATH
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                try:
+                    for term in terms:
+                        cursor.execute(
+                            "SELECT * FROM notified_items WHERE keyword = ? ORDER BY rowid DESC LIMIT 20",
+                            (term,)
+                        )
+                        rows = cursor.fetchall()
+                        if rows:
+                            items_by_term[term] = [dict(row) for row in rows]
+                except sqlite3.OperationalError:
+                    pass
+                conn.close()
+        except Exception as e:
+            logger.error(f"Erro ao buscar itens para categoria {category_name}: {e}")
+        return jsonify({
+            "category": category_name,
+            "priority": priority,
+            "max_price": max_price,
+            "terms_count": len(terms),
+            "terms": terms,
+            "items_by_term": items_by_term
+        })
+    except Exception as e:
+        logger.error(f"Erro na API de categoria: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/watchlist")
+def api_watchlist():
+    """API que retorna itens da watchlist."""
+    try:
+        status = "watching"
+        items = database.get_watchlist_items(status)
+        return jsonify({"status": "ok", "items": items, "count": len(items)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/price-history")
+def api_price_history():
+    """API que retorna historico de precos."""
+    try:
+        history = database.get_price_history(limit=100)
+        stats = database.get_price_history_by_category_stats()
+        return jsonify({"status": "ok", "history": history, "stats": stats, "count": len(history)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/watchlist/<int:item_id>/prices")
+def api_watchlist_prices(item_id):
+    """API que retorna historico de precos de um item da watchlist."""
+    try:
+        updates = database.get_price_updates(item_id)
+        item = database.get_watchlist_item(item_id)
+        return jsonify({"status": "ok", "item": item, "price_updates": updates})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ==========================================
 # DASHBOARD WEB — /dashboard
 # ==========================================
 
 def _get_db_items(limit=50):
-    """Busca os últimos itens no banco de dados SQLite."""
     items = []
     try:
         db_path = config.DB_PATH
@@ -423,7 +432,6 @@ def _get_db_items(limit=50):
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            # Tenta buscar da tabela de itens notificados
             try:
                 cursor.execute(
                     "SELECT * FROM notified_items ORDER BY rowid DESC LIMIT ?",
@@ -433,25 +441,7 @@ def _get_db_items(limit=50):
                 for row in rows:
                     items.append(dict(row))
             except sqlite3.OperationalError:
-                # Tabela pode ter nome diferente — tenta alternativas
-                cursor.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table'"
-                )
-                tables = [r[0] for r in cursor.fetchall()]
-                for table in tables:
-                    if "item" in table.lower() or "auction" in table.lower() or "notif" in table.lower():
-                        try:
-                            cursor.execute(
-                                f"SELECT * FROM {table} ORDER BY rowid DESC LIMIT ?",
-                                (limit,),
-                            )
-                            rows = cursor.fetchall()
-                            for row in rows:
-                                items.append(dict(row))
-                            if items:
-                                break
-                        except Exception:
-                            continue
+                pass
             conn.close()
     except Exception as e:
         logger.error(f"Erro ao buscar itens do banco: {e}")
@@ -459,70 +449,38 @@ def _get_db_items(limit=50):
 
 
 def _get_financial_data():
-    """Busca dados financeiros do banco de dados."""
     data = {
-        "total_invested": 0,
-        "total_sold": 0,
-        "profit": 0,
-        "items_in_stock": 0,
-        "items_sold": 0,
-        "items_tracked": 0,
+        "total_invested": 0, "total_sold": 0, "profit": 0,
+        "items_in_stock": 0, "items_sold": 0, "items_tracked": 0,
     }
     try:
-        db_path = config.DB_PATH
-        if os.path.exists(db_path):
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            # Busca tabelas financeiras
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = [r[0] for r in cursor.fetchall()]
-
-            for table in tables:
-                tl = table.lower()
-                if "purchase" in tl or "invest" in tl or "bought" in tl:
-                    try:
-                        cursor.execute(f"SELECT SUM(price) FROM {table}")
-                        result = cursor.fetchone()
-                        if result and result[0]:
-                            data["total_invested"] = float(result[0])
-                        cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                        result = cursor.fetchone()
-                        if result:
-                            data["items_in_stock"] = int(result[0])
-                    except Exception:
-                        pass
-
-                if "sale" in tl or "sold" in tl:
-                    try:
-                        cursor.execute(f"SELECT SUM(price) FROM {table}")
-                        result = cursor.fetchone()
-                        if result and result[0]:
-                            data["total_sold"] = float(result[0])
-                        cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                        result = cursor.fetchone()
-                        if result:
-                            data["items_sold"] = int(result[0])
-                    except Exception:
-                        pass
-
-                if "notif" in tl or "item" in tl or "track" in tl:
-                    try:
-                        cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                        result = cursor.fetchone()
-                        if result:
-                            data["items_tracked"] = int(result[0])
-                    except Exception:
-                        pass
-
-            conn.close()
-            data["profit"] = data["total_sold"] - data["total_invested"]
+        stats = database.get_dashboard_stats()
+        data["total_invested"] = stats.get("total_investido", 0)
+        data["total_sold"] = stats.get("total_vendas", 0)
+        data["profit"] = stats.get("lucro_acumulado", 0)
+        data["items_in_stock"] = stats.get("em_estoque", 0)
+        data["items_sold"] = stats.get("vendidos", 0)
+        data["items_tracked"] = stats.get("total_historico", 0)
     except Exception as e:
         logger.error(f"Erro ao buscar dados financeiros: {e}")
     return data
 
 
+def _get_watchlist_items():
+    try:
+        return database.get_watchlist_items("watching")
+    except Exception:
+        return []
+
+
+def _get_price_history_stats():
+    try:
+        return database.get_price_history_by_category_stats()
+    except Exception:
+        return []
+
+
 def _build_dashboard_html():
-    """Gera o HTML completo do dashboard."""
     now = datetime.now()
     uptime = now - _start_time
     uptime_str = f"{uptime.days}d {uptime.seconds // 3600}h {(uptime.seconds % 3600) // 60}m"
@@ -530,37 +488,27 @@ def _build_dashboard_html():
     total_terms = sum(len(v) for v in config.SEARCH_TERMS.values())
     total_categories = len(config.SEARCH_TERMS)
 
-    # Dados de atividade
     with _counters_lock:
         counters = dict(_activity_counters)
 
-    # Dados financeiros
     fin = _get_financial_data()
-
-    # Itens recentes do banco
     db_items = _get_db_items(30)
+    watchlist = _get_watchlist_items()
+    price_stats = _get_price_history_stats()
 
-    # Logs recentes
     with _log_lock:
         recent_logs = list(_log_buffer[-50:])
     recent_logs.reverse()
 
-    # Monta os cards de categorias
+    # Monta cards de categorias
     category_groups = {
-        "Allen & Heath": [],
-        "Shure Axient": [],
-        "Lighting": [],
-        "LED / Video": [],
-        "Golf Carts": [],
-        "Combos": [],
-        "Oportunidades": [],
+        "Allen & Heath": [], "Shure Axient": [], "Lighting": [],
+        "LED / Video": [], "Golf Carts": [], "Combos": [], "Oportunidades": [],
     }
-
     for cat_name, terms in config.SEARCH_TERMS.items():
         priority = "A" if cat_name in config.PRIORITY_A else "B" if cat_name in config.PRIORITY_B else "C"
         max_p = config.MAX_PRICE.get(cat_name, 0)
         entry = {"name": cat_name, "count": len(terms), "priority": priority, "max_price": max_p}
-
         cn = cat_name.lower()
         if "allen" in cn:
             category_groups["Allen & Heath"].append(entry)
@@ -577,18 +525,11 @@ def _build_dashboard_html():
         else:
             category_groups["Oportunidades"].append(entry)
 
-    # Gera HTML dos cards de categorias
-    cat_cards_html = ""
     group_icons = {
-        "Allen & Heath": "🎛",
-        "Shure Axient": "🎤",
-        "Lighting": "💡",
-        "LED / Video": "📺",
-        "Golf Carts": "🏌",
-        "Combos": "📦",
-        "Oportunidades": "🔍",
+        "Allen & Heath": "🎛", "Shure Axient": "🎤", "Lighting": "💡",
+        "LED / Video": "📺", "Golf Carts": "🏌", "Combos": "📦", "Oportunidades": "🔍",
     }
-
+    cat_cards_html = ""
     for group_name, entries in category_groups.items():
         if not entries:
             continue
@@ -622,7 +563,7 @@ def _build_dashboard_html():
             f'</div>'
         )
 
-    # Gera HTML da tabela de itens
+    # Tabela de itens
     items_rows = ""
     if db_items:
         for item in db_items[:30]:
@@ -630,7 +571,6 @@ def _build_dashboard_html():
             site = item.get("site", "N/A")
             price = item.get("price", "N/A")
             link = item.get("link", item.get("url", "#"))
-            # Trunca título longo
             if len(str(title)) > 70:
                 title = str(title)[:67] + "..."
             items_rows += (
@@ -643,13 +583,68 @@ def _build_dashboard_html():
                 f'</tr>'
             )
     else:
-        items_rows = (
-            '<tr><td colspan="5" class="no-data">'
-            'Nenhum item encontrado ainda. O agente esta buscando...'
-            '</td></tr>'
-        )
+        items_rows = '<tr><td colspan="5" class="no-data">Nenhum item encontrado ainda. O agente esta buscando...</td></tr>'
 
-    # Gera HTML dos logs
+    # Watchlist rows
+    watchlist_rows = ""
+    if watchlist:
+        for w in watchlist[:20]:
+            wt = w.get("title", "N/A")
+            if len(str(wt)) > 55:
+                wt = str(wt)[:52] + "..."
+            wprice = w.get("current_price", 0) or 0
+            wceiling = w.get("max_price_ceiling", 0) or 0
+            wsite = w.get("site", "N/A")
+            wurl = w.get("url", "#")
+            wclose = str(w.get("closing_date", "N/A"))[:16] if w.get("closing_date") else "N/A"
+            price_pct = (wprice / wceiling * 100) if wceiling > 0 else 0
+            bar_color = "#3fb950" if price_pct < 70 else "#d29922" if price_pct < 90 else "#f85149"
+            status_emoji = "🟢" if wprice <= wceiling else "🔴"
+            watchlist_rows += (
+                f'<tr>'
+                f'<td>{w.get("id", "")}</td>'
+                f'<td class="td-title">{wt}</td>'
+                f'<td>{wsite}</td>'
+                f'<td class="td-price">${wprice:,.2f}</td>'
+                f'<td>${wceiling:,.2f} {status_emoji}</td>'
+                f'<td>'
+                f'<div style="background:#21262d;border-radius:4px;overflow:hidden;height:8px;width:80px">'
+                f'<div style="background:{bar_color};height:100%;width:{min(price_pct, 100):.0f}%"></div>'
+                f'</div>'
+                f'<span style="font-size:10px;color:#8b949e">{price_pct:.0f}%</span>'
+                f'</td>'
+                f'<td>{wclose}</td>'
+                f'<td><a href="{wurl}" target="_blank" class="link-btn">Ver</a></td>'
+                f'</tr>'
+            )
+    else:
+        watchlist_rows = '<tr><td colspan="8" class="no-data">Nenhum leilao na agenda. Use /agendar URL TETO no Telegram.</td></tr>'
+
+    # Price history stats
+    price_bars_html = ""
+    if price_stats:
+        for ps in price_stats[:15]:
+            cat = ps.get("category", "N/A")
+            avg = ps.get("avg_price", 0) or 0
+            count = ps.get("total", 0) or 0
+            min_p = ps.get("min_price", 0) or 0
+            max_p = ps.get("max_price", 0) or 0
+            bar_width = min(avg / 200, 100) if avg > 0 else 0  # Escala: $20k = 100%
+            price_bars_html += (
+                f'<div class="price-bar-row">'
+                f'<div class="price-bar-label">{cat[:25]}</div>'
+                f'<div class="price-bar-container">'
+                f'<div class="price-bar-fill" style="width:{bar_width:.0f}%"></div>'
+                f'</div>'
+                f'<div class="price-bar-value">${avg:,.0f}</div>'
+                f'<div class="price-bar-count">{count}x</div>'
+                f'<div class="price-bar-range">${min_p:,.0f}-${max_p:,.0f}</div>'
+                f'</div>'
+            )
+    else:
+        price_bars_html = '<div class="no-data" style="padding:20px">Nenhum dado de historico ainda. Os precos serao coletados automaticamente.</div>'
+
+    # Logs
     logs_html = ""
     for log in recent_logs[:40]:
         level = log["level"]
@@ -667,13 +662,14 @@ def _build_dashboard_html():
     if not logs_html:
         logs_html = '<div class="log-entry log-info"><span class="log-msg">Aguardando logs...</span></div>'
 
-    # Status do agente
     agent_status = "Ativo" if agent else "Inicializando"
     status_color = "#00e676" if agent else "#ffc107"
-
-    # Ciclos estimados para cobrir todos os termos
     cycles_to_cover = (total_terms + config.TERMS_PER_CYCLE - 1) // config.TERMS_PER_CYCLE
+    watchlist_count = len(watchlist) if watchlist else 0
 
+    # ==========================================
+    # HTML COMPLETO
+    # ==========================================
     html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -687,7 +683,6 @@ body{{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0d11
 a{{color:#58a6ff;text-decoration:none}}
 a:hover{{text-decoration:underline}}
 
-/* Header */
 .header{{background:linear-gradient(135deg,#161b22 0%,#1a2332 100%);border-bottom:1px solid #30363d;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}}
 .header-left{{display:flex;align-items:center;gap:15px}}
 .logo{{font-size:28px;font-weight:700;color:#f0f6fc;letter-spacing:-0.5px}}
@@ -696,14 +691,19 @@ a:hover{{text-decoration:underline}}
 .header-right{{display:flex;align-items:center;gap:15px;font-size:13px;color:#8b949e}}
 .header-right .dot{{width:8px;height:8px;border-radius:50%;display:inline-block}}
 
-/* Container */
 .container{{max-width:1400px;margin:0 auto;padding:20px}}
 
-/* Section titles */
 .section-title{{font-size:18px;font-weight:600;color:#f0f6fc;margin:30px 0 15px;padding-bottom:8px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px}}
 .section-title:first-child{{margin-top:0}}
 
-/* Overview cards */
+/* Nav tabs */
+.nav-tabs{{display:flex;gap:5px;margin-bottom:20px;border-bottom:1px solid #30363d;padding-bottom:0;flex-wrap:wrap}}
+.nav-tab{{padding:10px 20px;background:transparent;border:none;color:#8b949e;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s}}
+.nav-tab:hover{{color:#c9d1d9}}
+.nav-tab.active{{color:#58a6ff;border-bottom-color:#58a6ff}}
+.tab-content{{display:none}}
+.tab-content.active{{display:block}}
+
 .overview-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px}}
 .overview-card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;transition:border-color 0.2s}}
 .overview-card:hover{{border-color:#58a6ff}}
@@ -715,7 +715,6 @@ a:hover{{text-decoration:underline}}
 .ov-value.red{{color:#f85149}}
 .ov-sub{{font-size:11px;color:#8b949e;margin-top:4px}}
 
-/* Category cards */
 .categories-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px;margin-bottom:25px}}
 .category-card{{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;transition:border-color 0.2s}}
 .category-card:hover{{border-color:#58a6ff}}
@@ -724,63 +723,14 @@ a:hover{{text-decoration:underline}}
 .cat-group-name{{font-weight:600;color:#f0f6fc;flex:1}}
 .cat-group-total{{font-size:12px;color:#8b949e;background:#21262d;padding:3px 10px;border-radius:10px}}
 .cat-sub-list{{padding:10px 18px}}
-.cat-sub-item{{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d}}
-.cat-sub-item:last-child{{border-bottom:none}}
-.cat-sub-name{{font-size:13px;color:#c9d1d9}}
-.cat-sub-meta{{display:flex;align-items:center;gap:8px;font-size:12px;color:#8b949e}}
-.priority-badge{{display:inline-block;width:22px;height:22px;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#0d1117}}
-
-/* Financial cards */
-.finance-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px}}
-.fin-card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center}}
-.fin-card .fin-icon{{font-size:28px;margin-bottom:8px}}
-.fin-card .fin-label{{font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px}}
-.fin-card .fin-value{{font-size:24px;font-weight:700;margin-top:5px}}
-
-/* Table */
-.table-wrap{{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;margin-bottom:25px}}
-.table-wrap table{{width:100%;border-collapse:collapse}}
-.table-wrap th{{background:#1c2333;padding:12px 15px;text-align:left;font-size:12px;text-transform:uppercase;color:#8b949e;letter-spacing:0.5px;border-bottom:1px solid #30363d}}
-.table-wrap td{{padding:10px 15px;border-bottom:1px solid #21262d;font-size:13px}}
-.table-wrap tr:last-child td{{border-bottom:none}}
-.table-wrap tr:hover{{background:#1c2128}}
-.td-title{{max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f0f6fc}}
-.td-price{{color:#3fb950;font-weight:600}}
-.status-active{{background:#238636;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600}}
-.link-btn{{background:#21262d;color:#58a6ff;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;transition:background 0.2s}}
-.link-btn:hover{{background:#30363d;text-decoration:none}}
-.no-data{{text-align:center;color:#8b949e;padding:30px!important;font-style:italic}}
-
-/* Logs */
-.logs-container{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:15px;max-height:400px;overflow-y:auto;margin-bottom:25px;font-family:'Cascadia Code','Fira Code','Consolas',monospace}}
-.log-entry{{padding:4px 8px;font-size:12px;line-height:1.6;border-radius:4px;margin-bottom:2px;display:flex;gap:10px;flex-wrap:wrap}}
-.log-entry:hover{{background:#1c2128}}
-.log-time{{color:#484f58;min-width:140px}}
-.log-level{{font-weight:600;min-width:60px}}
-.log-msg{{flex:1;word-break:break-all}}
-.log-info .log-level{{color:#58a6ff}}
-.log-warn .log-level{{color:#d29922}}
-.log-error .log-level{{color:#f85149}}
-.log-debug .log-level{{color:#8b949e}}
-
-/* Footer */
-.footer{{text-align:center;padding:20px;color:#484f58;font-size:12px;border-top:1px solid #21262d;margin-top:20px}}
-
-/* Scrollbar */
-::-webkit-scrollbar{{width:8px}}
-::-webkit-scrollbar-track{{background:#0d1117}}
-::-webkit-scrollbar-thumb{{background:#30363d;border-radius:4px}}
-::-webkit-scrollbar-thumb:hover{{background:#484f58}}
-
-/* Expandable categories */
-.cat-sub-item{{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #21262d;transition:background 0.2s;user-select:none}}
+.cat-sub-item{{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #21262d;transition:background 0.2s;user-select:none;cursor:pointer}}
 .cat-sub-item:last-of-type{{border-bottom:none}}
 .cat-sub-item:hover{{background:#1c2128}}
 .cat-sub-toggle{{display:inline-block;width:16px;text-align:center;color:#8b949e;font-size:12px;transition:transform 0.3s ease;margin-right:8px}}
 .cat-sub-item.expanded .cat-sub-toggle{{transform:rotate(90deg)}}
 .cat-sub-name{{flex:1;color:#c9d1d9;font-size:13px}}
 .cat-sub-meta{{display:flex;align-items:center;gap:8px;font-size:12px;color:#8b949e}}
-
+.priority-badge{{display:inline-block;width:22px;height:22px;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#0d1117}}
 .cat-sub-details{{background:#1c2128;border-left:3px solid #58a6ff;padding:15px;margin-top:5px;border-radius:6px}}
 .cat-sub-details.expanded{{max-height:2000px!important}}
 
@@ -798,11 +748,57 @@ a:hover{{text-decoration:underline}}
 .items-table .item-price{{color:#3fb950;font-weight:600}}
 .items-table .item-site{{color:#58a6ff;font-size:11px}}
 .items-table .item-link{{color:#58a6ff;text-decoration:underline;cursor:pointer}}
-
 .no-items{{color:#8b949e;font-style:italic;padding:10px;text-align:center;font-size:12px}}
 .loading{{color:#8b949e;font-size:12px;text-align:center;padding:10px}}
 
-/* Responsive */
+.finance-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px}}
+.fin-card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center}}
+.fin-card .fin-icon{{font-size:28px;margin-bottom:8px}}
+.fin-card .fin-label{{font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px}}
+.fin-card .fin-value{{font-size:24px;font-weight:700;margin-top:5px}}
+
+.table-wrap{{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;margin-bottom:25px}}
+.table-wrap table{{width:100%;border-collapse:collapse}}
+.table-wrap th{{background:#1c2333;padding:12px 15px;text-align:left;font-size:12px;text-transform:uppercase;color:#8b949e;letter-spacing:0.5px;border-bottom:1px solid #30363d}}
+.table-wrap td{{padding:10px 15px;border-bottom:1px solid #21262d;font-size:13px}}
+.table-wrap tr:last-child td{{border-bottom:none}}
+.table-wrap tr:hover{{background:#1c2128}}
+.td-title{{max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f0f6fc}}
+.td-price{{color:#3fb950;font-weight:600}}
+.status-active{{background:#238636;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600}}
+.link-btn{{background:#21262d;color:#58a6ff;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:500;transition:background 0.2s}}
+.link-btn:hover{{background:#30363d;text-decoration:none}}
+.no-data{{text-align:center;color:#8b949e;padding:30px!important;font-style:italic}}
+
+/* Price history bars */
+.price-bar-row{{display:flex;align-items:center;gap:10px;padding:8px 15px;border-bottom:1px solid #21262d}}
+.price-bar-row:last-child{{border-bottom:none}}
+.price-bar-row:hover{{background:#1c2128}}
+.price-bar-label{{width:180px;font-size:12px;color:#c9d1d9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+.price-bar-container{{flex:1;background:#21262d;border-radius:4px;height:16px;overflow:hidden}}
+.price-bar-fill{{height:100%;background:linear-gradient(90deg,#238636,#3fb950);border-radius:4px;transition:width 0.5s ease}}
+.price-bar-value{{width:80px;text-align:right;font-size:13px;font-weight:600;color:#3fb950}}
+.price-bar-count{{width:40px;text-align:center;font-size:11px;color:#8b949e}}
+.price-bar-range{{width:120px;text-align:right;font-size:11px;color:#8b949e}}
+
+.logs-container{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:15px;max-height:400px;overflow-y:auto;margin-bottom:25px;font-family:'Cascadia Code','Fira Code','Consolas',monospace}}
+.log-entry{{padding:4px 8px;font-size:12px;line-height:1.6;border-radius:4px;margin-bottom:2px;display:flex;gap:10px;flex-wrap:wrap}}
+.log-entry:hover{{background:#1c2128}}
+.log-time{{color:#484f58;min-width:140px}}
+.log-level{{font-weight:600;min-width:60px}}
+.log-msg{{flex:1;word-break:break-all}}
+.log-info .log-level{{color:#58a6ff}}
+.log-warn .log-level{{color:#d29922}}
+.log-error .log-level{{color:#f85149}}
+.log-debug .log-level{{color:#8b949e}}
+
+.footer{{text-align:center;padding:20px;color:#484f58;font-size:12px;border-top:1px solid #21262d;margin-top:20px}}
+
+::-webkit-scrollbar{{width:8px}}
+::-webkit-scrollbar-track{{background:#0d1117}}
+::-webkit-scrollbar-thumb{{background:#30363d;border-radius:4px}}
+::-webkit-scrollbar-thumb:hover{{background:#484f58}}
+
 @media(max-width:768px){{
     .header{{padding:15px}}
     .logo{{font-size:20px}}
@@ -814,6 +810,9 @@ a:hover{{text-decoration:underline}}
     .table-wrap table{{min-width:600px}}
     .ov-value{{font-size:22px}}
     .term-list{{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+    .nav-tabs{{overflow-x:auto}}
+    .price-bar-label{{width:100px}}
+    .price-bar-range{{display:none}}
 }}
 @media(max-width:480px){{
     .overview-grid{{grid-template-columns:1fr}}
@@ -824,11 +823,10 @@ a:hover{{text-decoration:underline}}
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
     <div class="header-left">
         <div class="logo">Agente de Leiloes <span>R33</span></div>
-        <span class="header-badge">Painel de Controle</span>
+        <span class="header-badge">Painel de Controle v5.0</span>
     </div>
     <div class="header-right">
         <span class="dot" style="background:{status_color}"></span>
@@ -842,202 +840,274 @@ a:hover{{text-decoration:underline}}
 
 <div class="container">
 
-    <!-- VISAO GERAL -->
-    <div class="section-title">Visao Geral</div>
-    <div class="overview-grid">
-        <div class="overview-card">
-            <div class="ov-label">Status</div>
-            <div class="ov-value green">{agent_status}</div>
-            <div class="ov-sub">Uptime: {uptime_str}</div>
+    <!-- NAVIGATION TABS -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('overview')">Visao Geral</button>
+        <button class="nav-tab" onclick="switchTab('agenda')">Agenda ({watchlist_count})</button>
+        <button class="nav-tab" onclick="switchTab('categories')">Categorias</button>
+        <button class="nav-tab" onclick="switchTab('auctions')">Leiloes Encontrados</button>
+        <button class="nav-tab" onclick="switchTab('history')">Historico de Precos</button>
+        <button class="nav-tab" onclick="switchTab('financial')">Financeiro</button>
+        <button class="nav-tab" onclick="switchTab('logs')">Logs</button>
+    </div>
+
+    <!-- TAB: VISAO GERAL -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="section-title">Visao Geral</div>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <div class="ov-label">Status</div>
+                <div class="ov-value green">{agent_status}</div>
+                <div class="ov-sub">Uptime: {uptime_str}</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Total de Termos</div>
+                <div class="ov-value blue">{total_terms}</div>
+                <div class="ov-sub">{total_categories} categorias</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Termos por Ciclo</div>
+                <div class="ov-value">{config.TERMS_PER_CYCLE}</div>
+                <div class="ov-sub">{cycles_to_cover} ciclos para cobrir tudo</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Intervalo</div>
+                <div class="ov-value">{config.CHECK_INTERVAL // 60} min</div>
+                <div class="ov-sub">{config.CHECK_INTERVAL}s entre ciclos</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Ciclos Completos</div>
+                <div class="ov-value blue">{counters["cycles_completed"]}</div>
+                <div class="ov-sub">Ultimo: {counters["last_cycle_time"] or "Aguardando..."}</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Itens Encontrados</div>
+                <div class="ov-value green">{counters["items_found_total"]}</div>
+                <div class="ov-sub">Este ciclo: {counters["items_found_this_cycle"]}</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Na Agenda</div>
+                <div class="ov-value orange">{watchlist_count}</div>
+                <div class="ov-sub">Leiloes monitorados</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Alertas Enviados</div>
+                <div class="ov-value orange">{counters["alerts_sent"]}</div>
+                <div class="ov-sub">Via Telegram</div>
+            </div>
         </div>
-        <div class="overview-card">
-            <div class="ov-label">Total de Termos</div>
-            <div class="ov-value blue">{total_terms}</div>
-            <div class="ov-sub">{total_categories} categorias</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Termos por Ciclo</div>
-            <div class="ov-value">{config.TERMS_PER_CYCLE}</div>
-            <div class="ov-sub">{cycles_to_cover} ciclos para cobrir tudo</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Intervalo</div>
-            <div class="ov-value">{config.CHECK_INTERVAL // 60} min</div>
-            <div class="ov-sub">{config.CHECK_INTERVAL}s entre ciclos</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Ciclos Completos</div>
-            <div class="ov-value blue">{counters["cycles_completed"]}</div>
-            <div class="ov-sub">Ultimo: {counters["last_cycle_time"] or "Aguardando..."}</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Itens Encontrados</div>
-            <div class="ov-value green">{counters["items_found_total"]}</div>
-            <div class="ov-sub">Este ciclo: {counters["items_found_this_cycle"]}</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Alertas Enviados</div>
-            <div class="ov-value orange">{counters["alerts_sent"]}</div>
-            <div class="ov-sub">Via Telegram</div>
-        </div>
-        <div class="overview-card">
-            <div class="ov-label">Erros</div>
-            <div class="ov-value red">{counters["errors_count"]}</div>
-            <div class="ov-sub">Desde o inicio</div>
+
+        <!-- Quick summary of watchlist -->
+        <div class="section-title">Agenda Rapida</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Titulo</th><th>Site</th><th>Preco Atual</th><th>Teto</th><th>Progresso</th><th>Encerra</th><th>Acao</th></tr>
+                </thead>
+                <tbody>{watchlist_rows}</tbody>
+            </table>
         </div>
     </div>
 
-    <!-- DASHBOARD FINANCEIRO -->
-    <div class="section-title">Dashboard Financeiro</div>
-    <div class="finance-grid">
-        <div class="fin-card">
-            <div class="fin-icon">📊</div>
-            <div class="fin-label">Itens Rastreados</div>
-            <div class="fin-value" style="color:#58a6ff">{fin["items_tracked"]}</div>
+    <!-- TAB: AGENDA -->
+    <div id="tab-agenda" class="tab-content">
+        <div class="section-title">Agenda de Leiloes Monitorados</div>
+        <div class="overview-grid" style="margin-bottom:20px">
+            <div class="overview-card">
+                <div class="ov-label">Monitorando</div>
+                <div class="ov-value blue">{watchlist_count}</div>
+                <div class="ov-sub">Leiloes ativos na agenda</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Verificacao de Preco</div>
+                <div class="ov-value">30 min</div>
+                <div class="ov-sub">Intervalo de monitoramento</div>
+            </div>
+            <div class="overview-card">
+                <div class="ov-label">Lembretes</div>
+                <div class="ov-value green">Ativo</div>
+                <div class="ov-sub">24h, 1h, 15min antes</div>
+            </div>
         </div>
-        <div class="fin-card">
-            <div class="fin-icon">💰</div>
-            <div class="fin-label">Total Investido</div>
-            <div class="fin-value" style="color:#f85149">${fin["total_invested"]:,.2f}</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Titulo</th><th>Site</th><th>Preco Atual</th><th>Teto</th><th>Progresso</th><th>Encerra</th><th>Acao</th></tr>
+                </thead>
+                <tbody>{watchlist_rows}</tbody>
+            </table>
         </div>
-        <div class="fin-card">
-            <div class="fin-icon">🏷</div>
-            <div class="fin-label">Total Vendido</div>
-            <div class="fin-value" style="color:#3fb950">${fin["total_sold"]:,.2f}</div>
-        </div>
-        <div class="fin-card">
-            <div class="fin-icon">📈</div>
-            <div class="fin-label">Lucro</div>
-            <div class="fin-value" style="color:{"#3fb950" if fin["profit"] >= 0 else "#f85149"}">${fin["profit"]:,.2f}</div>
-        </div>
-        <div class="fin-card">
-            <div class="fin-icon">📦</div>
-            <div class="fin-label">Em Estoque</div>
-            <div class="fin-value" style="color:#d29922">{fin["items_in_stock"]}</div>
-        </div>
-        <div class="fin-card">
-            <div class="fin-icon">✅</div>
-            <div class="fin-label">Vendidos</div>
-            <div class="fin-value" style="color:#3fb950">{fin["items_sold"]}</div>
+        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin-top:15px">
+            <div style="color:#f0f6fc;font-weight:600;margin-bottom:10px">Como usar a Agenda</div>
+            <div style="font-size:13px;color:#8b949e;line-height:1.8">
+                <strong style="color:#58a6ff">/agendar URL TETO</strong> - Adiciona um leilao a agenda<br>
+                <strong style="color:#58a6ff">/agenda</strong> - Lista todos os leiloes monitorados<br>
+                <strong style="color:#58a6ff">/teto ID VALOR</strong> - Altera o teto de um leilao<br>
+                <strong style="color:#58a6ff">/cancelar ID</strong> - Remove um leilao da agenda<br>
+                <strong style="color:#58a6ff">/arquivar ID</strong> - Move para o arquivo<br>
+            </div>
         </div>
     </div>
 
-    <!-- CATEGORIAS DE BUSCA -->
-    <div class="section-title">Categorias de Busca ({total_categories} categorias, {total_terms} termos)</div>
-    <div class="categories-grid">
-        {cat_cards_html}
+    <!-- TAB: CATEGORIAS -->
+    <div id="tab-categories" class="tab-content">
+        <div class="section-title">Categorias de Busca ({total_categories} categorias, {total_terms} termos)</div>
+        <div class="categories-grid">{cat_cards_html}</div>
     </div>
 
-    <!-- ULTIMOS LEILOES ENCONTRADOS -->
-    <div class="section-title">Ultimos Leiloes Encontrados</div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Titulo</th>
-                    <th>Site</th>
-                    <th>Preco</th>
-                    <th>Status</th>
-                    <th>Acao</th>
-                </tr>
-            </thead>
-            <tbody>
-                {items_rows}
-            </tbody>
-        </table>
+    <!-- TAB: LEILOES ENCONTRADOS -->
+    <div id="tab-auctions" class="tab-content">
+        <div class="section-title">Ultimos Leiloes Encontrados</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Titulo</th><th>Site</th><th>Preco</th><th>Status</th><th>Acao</th></tr>
+                </thead>
+                <tbody>{items_rows}</tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- LOGS RECENTES -->
-    <div class="section-title">Logs Recentes dos Scrapers</div>
-    <div class="logs-container">
-        {logs_html}
+    <!-- TAB: HISTORICO DE PRECOS -->
+    <div id="tab-history" class="tab-content">
+        <div class="section-title">Historico de Precos por Categoria</div>
+        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;margin-bottom:25px">
+            <div style="display:flex;align-items:center;padding:12px 15px;background:#1c2333;border-bottom:1px solid #30363d;font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px">
+                <div style="width:180px">Categoria</div>
+                <div style="flex:1">Preco Medio</div>
+                <div style="width:80px;text-align:right">Media</div>
+                <div style="width:40px;text-align:center">Qtd</div>
+                <div style="width:120px;text-align:right">Faixa</div>
+            </div>
+            {price_bars_html}
+        </div>
+        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin-top:15px">
+            <div style="color:#f0f6fc;font-weight:600;margin-bottom:10px">Consultar Historico</div>
+            <div style="font-size:13px;color:#8b949e;line-height:1.8">
+                <strong style="color:#58a6ff">/historico PRODUTO</strong> - Mostra historico de precos de um produto<br>
+                <strong style="color:#58a6ff">/preco PRODUTO</strong> - Mostra preco medio de arrematacao<br>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: FINANCEIRO -->
+    <div id="tab-financial" class="tab-content">
+        <div class="section-title">Dashboard Financeiro</div>
+        <div class="finance-grid">
+            <div class="fin-card">
+                <div class="fin-icon">📊</div>
+                <div class="fin-label">Itens Rastreados</div>
+                <div class="fin-value" style="color:#58a6ff">{fin["items_tracked"]}</div>
+            </div>
+            <div class="fin-card">
+                <div class="fin-icon">💰</div>
+                <div class="fin-label">Total Investido</div>
+                <div class="fin-value" style="color:#f85149">${fin["total_invested"]:,.2f}</div>
+            </div>
+            <div class="fin-card">
+                <div class="fin-icon">🏷</div>
+                <div class="fin-label">Total Vendido</div>
+                <div class="fin-value" style="color:#3fb950">${fin["total_sold"]:,.2f}</div>
+            </div>
+            <div class="fin-card">
+                <div class="fin-icon">📈</div>
+                <div class="fin-label">Lucro</div>
+                <div class="fin-value" style="color:{"#3fb950" if fin["profit"] >= 0 else "#f85149"}">${fin["profit"]:,.2f}</div>
+            </div>
+            <div class="fin-card">
+                <div class="fin-icon">📦</div>
+                <div class="fin-label">Em Estoque</div>
+                <div class="fin-value" style="color:#d29922">{fin["items_in_stock"]}</div>
+            </div>
+            <div class="fin-card">
+                <div class="fin-icon">✅</div>
+                <div class="fin-label">Vendidos</div>
+                <div class="fin-value" style="color:#3fb950">{fin["items_sold"]}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: LOGS -->
+    <div id="tab-logs" class="tab-content">
+        <div class="section-title">Logs Recentes dos Scrapers</div>
+        <div class="logs-container">{logs_html}</div>
     </div>
 
 </div>
 
-<!-- FOOTER -->
 <div class="footer">
-    Agente de Leiloes R33 v4.0 &mdash; Painel de Controle &mdash;
+    Agente de Leiloes R33 v5.0 &mdash; Gestao Completa &mdash;
     {total_terms} termos em {total_categories} categorias &mdash;
+    {watchlist_count} leiloes na agenda &mdash;
     Render Free (512MB RAM) &mdash;
     {now.strftime("%d/%m/%Y %H:%M:%S")}
 </div>
 
 <script>
+function switchTab(tabName) {{
+    document.querySelectorAll('.tab-content').forEach(function(el) {{
+        el.classList.remove('active');
+    }});
+    document.querySelectorAll('.nav-tab').forEach(function(el) {{
+        el.classList.remove('active');
+    }});
+    var tab = document.getElementById('tab-' + tabName);
+    if (tab) tab.classList.add('active');
+    event.target.classList.add('active');
+}}
+
 function toggleCategory(elem, event) {{
     event.stopPropagation();
-    const categoryName = elem.getAttribute('data-category');
-    const detailsId = 'details-' + categoryName.replace(/ /g, '_').toLowerCase();
-    const detailsElem = document.getElementById(detailsId);
-    
+    var categoryName = elem.getAttribute('data-category');
+    var detailsId = 'details-' + categoryName.replace(/ /g, '_').toLowerCase();
+    var detailsElem = document.getElementById(detailsId);
     if (!detailsElem) return;
-    
-    const isExpanded = elem.classList.contains('expanded');
-    
+    var isExpanded = elem.classList.contains('expanded');
     if (isExpanded) {{
-        // Colapsar
         elem.classList.remove('expanded');
         detailsElem.classList.remove('expanded');
         detailsElem.style.maxHeight = '0';
     }} else {{
-        // Expandir
         elem.classList.add('expanded');
         detailsElem.classList.add('expanded');
-        
-        // Carrega dados se ainda nao carregou
         if (detailsElem.querySelector('.loading')) {{
             loadCategoryData(categoryName, detailsElem);
         }}
-        
-        // Anima a expansao
         detailsElem.style.maxHeight = '2000px';
     }}
 }}
 
 function loadCategoryData(categoryName, detailsElem) {{
-    // Busca dados da API
     fetch('/api/category/' + encodeURIComponent(categoryName))
-        .then(response => response.json())
-        .then(data => {{
+        .then(function(response) {{ return response.json(); }})
+        .then(function(data) {{
             if (data.error) {{
                 detailsElem.innerHTML = '<div class="no-items">Erro ao carregar dados</div>';
                 return;
             }}
-            
-            let html = '';
-            
-            // Lista de termos
+            var html = '';
             html += '<div style="margin-bottom:15px">';
             html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Termos de Busca (' + data.terms.length + ')</div>';
             html += '<div class="term-list">';
-            
-            data.terms.forEach(term => {{
-                const itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
+            data.terms.forEach(function(term) {{
+                var itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
                 html += '<div class="term-item">';
                 html += '<div class="term-name">' + term + '</div>';
-                html += '<div class="term-count">' + itemCount + ' item' + (itemCount !== 1 ? 'ns' : '') + ' encontrado' + (itemCount !== 1 ? 's' : '') + '</div>';
+                html += '<div class="term-count">' + itemCount + ' ite' + (itemCount !== 1 ? 'ns' : 'm') + '</div>';
                 html += '</div>';
             }});
-            
-            html += '</div>';
-            html += '</div>';
-            
-            // Itens encontrados
-            const hasItems = Object.keys(data.items_by_term).length > 0;
+            html += '</div></div>';
+            var hasItems = Object.keys(data.items_by_term).length > 0;
             if (hasItems) {{
                 html += '<div style="margin-bottom:15px">';
                 html += '<div style="color:#f0f6fc;font-weight:600;margin-bottom:10px;font-size:13px">Itens Encontrados</div>';
-                html += '<table class="items-table">';
-                html += '<thead><tr><th>Titulo</th><th>Preco</th><th>Site</th><th>Acao</th></tr></thead>';
-                html += '<tbody>';
-                
-                for (const [term, items] of Object.entries(data.items_by_term)) {{
-                    items.forEach(item => {{
-                        const title = item.title || item.name || 'N/A';
-                        const price = item.price || 'N/A';
-                        const site = item.site || 'N/A';
-                        const link = item.link || item.url || '#';
-                        
+                html += '<table class="items-table"><thead><tr><th>Titulo</th><th>Preco</th><th>Site</th><th>Acao</th></tr></thead><tbody>';
+                for (var term in data.items_by_term) {{
+                    data.items_by_term[term].forEach(function(item) {{
+                        var title = item.title || item.name || 'N/A';
+                        var price = item.price || 'N/A';
+                        var site = item.site || 'N/A';
+                        var link = item.link || item.url || '#';
                         html += '<tr>';
                         html += '<td class="item-title" title="' + title + '">' + title + '</td>';
                         html += '<td class="item-price">' + price + '</td>';
@@ -1046,19 +1116,14 @@ function loadCategoryData(categoryName, detailsElem) {{
                         html += '</tr>';
                     }});
                 }}
-                
-                html += '</tbody>';
-                html += '</table>';
-                html += '</div>';
+                html += '</tbody></table></div>';
             }} else {{
                 html += '<div class="no-items">Nenhum item encontrado ainda para esta categoria</div>';
             }}
-            
             detailsElem.innerHTML = html;
         }})
-        .catch(error => {{
-            console.error('Erro ao carregar categoria:', error);
-            detailsElem.innerHTML = '<div class="no-items">Erro ao carregar dados: ' + error.message + '</div>';
+        .catch(function(error) {{
+            detailsElem.innerHTML = '<div class="no-items">Erro ao carregar: ' + error.message + '</div>';
         }});
 }}
 </script>
@@ -1068,85 +1133,8 @@ function loadCategoryData(categoryName, detailsElem) {{
     return html
 
 
-@app.route("/api/category/<category_name>")
-def api_category(category_name):
-    """
-    API que retorna os termos de uma categoria e os itens encontrados.
-    
-    Retorna JSON com:
-    - category: nome da categoria
-    - priority: A/B/C
-    - terms: lista de termos da categoria
-    - items: lista de itens encontrados para cada termo
-    """
-    try:
-        # Valida se a categoria existe
-        if category_name not in config.SEARCH_TERMS:
-            return jsonify({"error": "Categoria nao encontrada"}), 404
-        
-        terms = config.SEARCH_TERMS[category_name]
-        priority = "A" if category_name in config.PRIORITY_A else "B" if category_name in config.PRIORITY_B else "C"
-        max_price = config.MAX_PRICE.get(category_name, "N/A")
-        
-        # Busca itens do banco de dados para esta categoria
-        items_by_term = {}
-        try:
-            db_path = config.DB_PATH
-            if os.path.exists(db_path):
-                conn = sqlite3.connect(db_path)
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                
-                # Busca a tabela de itens
-                try:
-                    for term in terms:
-                        cursor.execute(
-                            "SELECT * FROM notified_items WHERE keyword = ? ORDER BY rowid DESC LIMIT 20",
-                            (term,)
-                        )
-                        rows = cursor.fetchall()
-                        if rows:
-                            items_by_term[term] = [dict(row) for row in rows]
-                except sqlite3.OperationalError:
-                    # Tenta encontrar a tabela correta
-                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                    tables = [r[0] for r in cursor.fetchall()]
-                    for table in tables:
-                        if "item" in table.lower() or "notif" in table.lower():
-                            try:
-                                for term in terms:
-                                    cursor.execute(
-                                        f"SELECT * FROM {table} WHERE keyword = ? ORDER BY rowid DESC LIMIT 20",
-                                        (term,)
-                                    )
-                                    rows = cursor.fetchall()
-                                    if rows:
-                                        items_by_term[term] = [dict(row) for row in rows]
-                            except Exception:
-                                pass
-                            break
-                
-                conn.close()
-        except Exception as e:
-            logger.error(f"Erro ao buscar itens para categoria {category_name}: {e}")
-        
-        return jsonify({
-            "category": category_name,
-            "priority": priority,
-            "max_price": max_price,
-            "terms_count": len(terms),
-            "terms": terms,
-            "items_by_term": items_by_term
-        })
-        
-    except Exception as e:
-        logger.error(f"Erro na API de categoria: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
 @app.route("/dashboard")
 def dashboard():
-    """Dashboard web completo do agente de leiloes."""
     html = _build_dashboard_html()
     return html, 200, {"Content-Type": "text/html; charset=utf-8"}
 
@@ -1155,7 +1143,6 @@ def dashboard():
 # INICIALIZACAO
 # ==========================================
 def start_agent():
-    """Inicializa o agente em background."""
     global agent
     try:
         agent = AuctionAgent()
@@ -1165,11 +1152,8 @@ def start_agent():
 
 
 if __name__ == "__main__":
-    # Inicia o agente em uma thread separada
     agent_thread = threading.Thread(target=start_agent, daemon=True)
     agent_thread.start()
-
-    # Inicia o servidor Flask
     port = int(os.environ.get("PORT", 10000))
     logger.info(f"Iniciando servidor Flask na porta {port}...")
     app.run(host="0.0.0.0", port=port)
