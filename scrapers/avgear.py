@@ -1,4 +1,5 @@
 from .base_scraper import BaseScraper, logger
+from .auction_utils import should_include_item
 import re
 import json
 
@@ -11,6 +12,7 @@ class AVGearScraper(BaseScraper):
     Estratégia:
     1. Tenta a API JSON do Shopify (search/suggest.json)
     2. Fallback para scraping HTML
+    3. Filtra apenas itens ATIVOS (ignora sold/unavailable)
     """
     
     def __init__(self):
@@ -51,6 +53,12 @@ class AVGearScraper(BaseScraper):
                 title = product.get('title', '')
                 handle = product.get('handle', '')
                 price = product.get('price', '')
+                available = product.get('available', True)
+                
+                # Filtra apenas produtos disponíveis
+                if not available:
+                    logger.debug(f"Produto descartado (indisponível): {title}")
+                    continue
                 
                 if price:
                     try:
@@ -70,7 +78,7 @@ class AVGearScraper(BaseScraper):
                     "keyword": keyword
                 })
                 
-            logger.info(f"Encontrados {len(results)} itens no {self.site_name} (JSON) para '{keyword}'")
+            logger.info(f"Encontrados {len(results)} itens ATIVOS no {self.site_name} (JSON) para '{keyword}'")
             return results
             
         except Exception as e:
@@ -104,6 +112,13 @@ class AVGearScraper(BaseScraper):
                 
                 if item_id in processed_ids:
                     continue
+                
+                # Verifica disponibilidade no contexto
+                element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                if not should_include_item(element_context, ""):
+                    logger.debug(f"Produto descartado (indisponível): {product_slug}")
+                    continue
+                
                 processed_ids.add(item_id)
                 
                 # Título: tenta múltiplas fontes
@@ -153,5 +168,5 @@ class AVGearScraper(BaseScraper):
             except Exception as e:
                 logger.error(f"Erro ao processar item no {self.site_name}: {e}")
                 
-        logger.info(f"Encontrados {len(results)} itens no {self.site_name} (HTML) para '{keyword}'")
+        logger.info(f"Encontrados {len(results)} itens ATIVOS no {self.site_name} (HTML) para '{keyword}'")
         return results
