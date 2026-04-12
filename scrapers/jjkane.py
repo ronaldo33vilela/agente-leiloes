@@ -25,21 +25,27 @@ class JJKaneScraper(BaseScraper):
         
     def search(self, keyword):
         """Busca itens no JJ Kane usando requests."""
-        logger.info(f"Buscando '{keyword}' no {self.site_name}...")
+        logger.info(f"[JJ Kane] Iniciando busca por '{keyword}'")
         
         all_results = []
         
         # Estratégia 1: Proxibid (catálogos de leilão ativos)
+        logger.debug(f"[JJ Kane] Tentando Proxibid...")
         proxibid_results = self._search_proxibid(keyword)
+        logger.info(f"[JJ Kane] Proxibid: {len(proxibid_results)} resultados")
         all_results.extend(proxibid_results)
         
         # Estratégia 2: Categorias do site
+        logger.debug(f"[JJ Kane] Tentando categorias...")
         category_results = self._search_categories(keyword)
+        logger.info(f"[JJ Kane] Categorias: {len(category_results)} resultados")
         all_results.extend(category_results)
         
         # Estratégia 3: WordPress search (fallback)
         if not all_results:
+            logger.debug(f"[JJ Kane] Tentando WordPress search...")
             wp_results = self._search_wordpress(keyword)
+            logger.info(f"[JJ Kane] WordPress: {len(wp_results)} resultados")
             all_results.extend(wp_results)
         
         # Deduplicar por título
@@ -53,7 +59,7 @@ class JJKaneScraper(BaseScraper):
         
         # Filtrar por relevância
         unique_results = filter_items(unique_results, keyword, min_score=0.5)
-        logger.info(f"Encontrados {len(unique_results)} itens ATIVOS no {self.site_name} para '{keyword}'")
+        logger.info(f"[JJ Kane] Total: {len(unique_results)} itens ATIVOS")
         return unique_results
     
     def _search_proxibid(self, keyword):

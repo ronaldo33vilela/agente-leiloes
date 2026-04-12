@@ -2,6 +2,7 @@ from .base_scraper import BaseScraper, logger
 from .auction_utils import should_include_item
 from .relevance_filter import filter_items
 import re
+import sys
 
 class BidSpotterScraper(BaseScraper):
     """
@@ -36,15 +37,30 @@ class BidSpotterScraper(BaseScraper):
         search_url = f"{self.base_url}/en-us/search-results"
         params = {"searchTerm": keyword}
         
+        logger.debug(f"[BidSpotter] Acessando: {search_url}?searchTerm={keyword}")
+        logger.debug(f"[BidSpotter] Headers: {self.session.headers}")
+        
         soup = self.fetch_page(search_url, params=params)
         if not soup:
-            logger.warning(f"Falha ao acessar search-results do {self.site_name}")
+            logger.error(f"[BidSpotter] FALHA ao acessar search-results (retornou None)")
             return []
+        
+        # Log do tamanho da resposta
+        html_size = len(soup.prettify()) if soup else 0
+        logger.debug(f"[BidSpotter] HTML recebido: {html_size} bytes")
         
         # Verificar se redirecionou para página de erro
         title_tag = soup.find('title')
-        if title_tag and 'error' in title_tag.get_text().lower():
-            logger.warning(f"Página de erro no {self.site_name}")
+        title_text = title_tag.get_text() if title_tag else "(sem title)"
+        logger.debug(f"[BidSpotter] Title da página: {title_text}")
+        
+        if title_tag and 'error' in title_text.lower():
+            logger.error(f"[BidSpotter] Página de erro detectada: {title_text}")
+            return []
+        
+        # Verificar se é página de bloqueio (403, captcha, etc)
+        if any(x in title_text.lower() for x in ['403', 'forbidden', 'blocked', 'captcha', 'robot', 'access denied']):
+            logger.error(f"[BidSpotter] BLOQUEIO detectado: {title_text}")
             return []
         
         results = []
@@ -52,7 +68,14 @@ class BidSpotterScraper(BaseScraper):
         
         # Estratégia 1: Extrair lotes via data-lot-id (mais confiável)
         lot_elements = soup.find_all(attrs={"data-lot-id": True})
-        logger.info(f"Encontrados {len(lot_elements)} elementos com data-lot-id")
+        logger.info(f"[BidSpotter] Encontrados {len(lot_elements)} elementos com data-lot-id")
+        
+        if not lot_elements:
+            # Debug: procurar por qualquer div/li que possa conter lotes
+            all_divs = soup.find_all('div', limit=20)
+            all_lis = soup.find_all('li', limit=20)
+            logger.debug(f"[BidSpotter] Debug - {len(all_divs)} divs, {len(all_lis)} lis encontrados")
+            logger.debug(f"[BidSpotter] Primeiros 500 chars do HTML: {soup.prettify()[:500]}")
         
         for el in lot_elements:
             try:
@@ -107,7 +130,9 @@ class BidSpotterScraper(BaseScraper):
         if results:
             # Filtrar por relevância
             results = filter_items(results, keyword, min_score=0.5)
-            logger.info(f"Encontrados {len(results)} itens ATIVOS e relevantes no {self.site_name}")
+            logger.info(f"[BidSpotter] Encontrados {len(results)} itens ATIVOS e relevantes")
+        else:
+            logger.warning(f"[BidSpotter] Nenhum resultado encontrado para '{keyword}'")
         
         return results
     
