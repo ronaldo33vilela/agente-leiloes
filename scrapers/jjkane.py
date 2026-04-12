@@ -4,134 +4,64 @@ import re
 class JJKaneScraper(BaseScraper):
     """
     Scraper para o site JJ Kane Auctions.
-    JJ Kane usa Cloudflare e pode bloquear requests diretos.
-    Usamos Selenium como método principal.
+    Usa requests + BeautifulSoup (sem Selenium).
+    
+    Estratégia:
+    1. Tenta múltiplas URLs de busca com requests
+    2. Parsing HTML dos resultados
     """
     
     def __init__(self):
         super().__init__("JJ Kane")
         self.base_url = "https://www.jjkane.com"
-        self.driver = None
-        
-    def _init_driver(self):
-        """Inicializa o Selenium WebDriver se ainda não estiver ativo."""
-        if self.driver:
-            return
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-            
-            self.driver = webdriver.Chrome(options=options)
-            self.driver.set_page_load_timeout(30)
-            logger.info("Selenium WebDriver inicializado para JJ Kane.")
-        except Exception as e:
-            logger.error(f"Erro ao inicializar Selenium para JJ Kane: {e}")
-            self.driver = None
         
     def search(self, keyword):
-        """Busca itens no JJ Kane usando Selenium."""
+        """Busca itens no JJ Kane usando requests."""
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
-        self._init_driver()
-        if not self.driver:
-            return self._search_fallback(keyword)
-            
-        try:
-            import time
-            from selenium.webdriver.common.by import By
-            
-            # Tenta múltiplas URLs de busca
-            urls_to_try = [
-                f"{self.base_url}/search?q={keyword.replace(' ', '+')}",
-                f"{self.base_url}/inventory?keyword={keyword.replace(' ', '+')}",
-                f"{self.base_url}/?s={keyword.replace(' ', '+')}",
-            ]
-            
-            for search_url in urls_to_try:
-                try:
-                    self.driver.get(search_url)
-                    time.sleep(5)
-                    
-                    # Verifica se a página carregou resultados
-                    page_source = self.driver.page_source
-                    if keyword.lower() in page_source.lower() and len(page_source) > 5000:
-                        break
-                except:
-                    continue
-            
-            results = []
-            
-            # Tenta encontrar cards de resultado com vários seletores
-            selectors = [
-                'a[href*="/item-detail/"]',
-                'a[href*="/lot/"]',
-                'a[href*="/inventory/"]',
-                '.inventory-item a',
-                '.lot-card a',
-                '.search-result a'
-            ]
-            
-            for selector in selectors:
-                try:
-                    elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
-                    if elements:
-                        for elem in elements[:20]:
-                            try:
-                                title = elem.text.strip() or elem.get_attribute('title') or ''
-                                link = elem.get_attribute('href') or ''
-                                
-                                if not title or not link:
-                                    continue
-                                    
-                                item_id = f"jjkane_{hash(link) % 100000}"
-                                results.append({
-                                    "id": item_id,
-                                    "site": self.site_name,
-                                    "title": title,
-                                    "link": link,
-                                    "price": "Consultar no site",
-                                    "keyword": keyword
-                                })
-                            except:
-                                continue
-                        if results:
-                            break
-                except:
-                    continue
-                    
-            logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
-            return results
-            
-        except Exception as e:
-            logger.error(f"Erro no Selenium para {self.site_name}: {e}")
-            return []
-            
-    def _search_fallback(self, keyword):
-        """Fallback usando requests."""
-        logger.info(f"Usando fallback para {self.site_name}...")
-        
+        # Tenta múltiplas URLs de busca
         urls_to_try = [
             (f"{self.base_url}/search", {"q": keyword}),
             (f"{self.base_url}/inventory", {"keyword": keyword}),
+            (f"{self.base_url}/", {"s": keyword}),
         ]
         
         for url, params in urls_to_try:
-            soup = self.fetch_page(url, params=params)
-            if not soup:
+            try:
+                results = self._search_url(url, params, keyword)
+                if results:
+                    return results
+            except Exception as e:
+                logger.error(f"Erro ao buscar em {url}: {e}")
                 continue
-                
-            results = []
-            links = soup.find_all('a', href=re.compile(r'/(item-detail|lot|inventory)/'))
+        
+        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
+        return []
+    
+    def _search_url(self, url, params, keyword):
+        """Busca em uma URL específica e extrai resultados."""
+        soup = self.fetch_page(url, params=params)
+        if not soup:
+            return []
+        
+        # Verifica se a página tem conteúdo relevante
+        page_text = soup.get_text().lower()
+        if keyword.lower() not in page_text and len(page_text) < 1000:
+            return []
+        
+        results = []
+        processed = set()
+        
+        # Padrões de links para itens de leilão
+        link_patterns = [
+            re.compile(r'/(item-detail|lot|inventory|equipment)/'),
+            re.compile(r'/auction/'),
+            re.compile(r'/listing/'),
+        ]
+        
+        for pattern in link_patterns:
+            links = soup.find_all('a', href=pattern)
             
-            processed = set()
             for link_elem in links:
                 try:
                     href = link_elem.get('href', '')
@@ -139,32 +69,106 @@ class JJKaneScraper(BaseScraper):
                         continue
                     processed.add(href)
                     
-                    title = link_elem.text.strip() or link_elem.get('title', '')
-                    if not title:
+                    # Extrai título de múltiplas fontes
+                    title = self._extract_title(link_elem)
+                    if not title or len(title) < 3:
                         continue
-                        
+                    
+                    # Busca preço no contexto
+                    price = self._extract_price(link_elem)
+                    
                     item_id = f"jjkane_{hash(href) % 100000}"
+                    full_link = f"{self.base_url}{href}" if not href.startswith('http') else href
+                    
                     results.append({
                         "id": item_id,
                         "site": self.site_name,
                         "title": title,
-                        "link": f"{self.base_url}{href}" if not href.startswith('http') else href,
-                        "price": "Consultar no site",
+                        "link": full_link,
+                        "price": price,
                         "keyword": keyword
                     })
-                except:
+                except Exception:
                     continue
-                    
+            
             if results:
-                logger.info(f"Fallback encontrou {len(results)} itens no {self.site_name}")
-                return results
-                
-        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
-        return []
+                break
         
-    def __del__(self):
-        if self.driver:
+        # Se não encontrou com padrões específicos, tenta busca genérica
+        if not results:
+            results = self._generic_search(soup, keyword)
+        
+        logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
+        return results
+    
+    def _generic_search(self, soup, keyword):
+        """Busca genérica quando os padrões específicos não funcionam."""
+        results = []
+        processed = set()
+        
+        # Busca todos os links que contenham a keyword no texto ou no href
+        all_links = soup.find_all('a', href=True)
+        
+        for link_elem in all_links:
             try:
-                self.driver.quit()
-            except:
-                pass
+                href = link_elem.get('href', '')
+                text = link_elem.text.strip()
+                
+                # Filtra links relevantes
+                if href in processed or not text or len(text) < 5:
+                    continue
+                if href.startswith('#') or href.startswith('javascript:'):
+                    continue
+                if keyword.lower() not in text.lower() and keyword.lower() not in href.lower():
+                    continue
+                
+                processed.add(href)
+                
+                item_id = f"jjkane_{hash(href) % 100000}"
+                full_link = f"{self.base_url}{href}" if not href.startswith('http') else href
+                
+                results.append({
+                    "id": item_id,
+                    "site": self.site_name,
+                    "title": text[:200],
+                    "link": full_link,
+                    "price": "Consultar no site",
+                    "keyword": keyword
+                })
+            except Exception:
+                continue
+        
+        return results[:20]
+    
+    def _extract_title(self, element):
+        """Extrai título de um elemento link."""
+        # 1. Texto direto do link
+        title = element.text.strip()
+        
+        # 2. Atributo title
+        if not title:
+            title = element.get('title', '')
+        
+        # 3. Atributo aria-label
+        if not title:
+            title = element.get('aria-label', '')
+        
+        # 4. Heading dentro do link
+        if not title:
+            heading = element.find(['h1', 'h2', 'h3', 'h4', 'h5', 'span'])
+            if heading:
+                title = heading.text.strip()
+        
+        return title
+    
+    def _extract_price(self, element):
+        """Extrai preço do contexto próximo a um elemento."""
+        parent = element
+        for _ in range(5):
+            parent = parent.parent
+            if parent is None:
+                break
+            price_match = re.search(r'\$[\d,]+\.?\d*', parent.text)
+            if price_match:
+                return price_match.group(0)
+        return "Consultar no site"
