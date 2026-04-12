@@ -1,0 +1,5612 @@
+    <!DOCTYPE html>
+    <html lang='en'>
+        <head>
+            <title>Public Surplus: 
+	Search an auction
+</title>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+            <meta name="template" content="psV2/en/search.ftlh"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <link rel="icon" href="/sms/20240825/images/ps_favicon.ico"/>
+
+<link href="/sms/20240825/styles/bootstrap-icons-1.11.1/bootstrap-icons.css" rel="stylesheet" type="text/css" />
+<link href="/sms/20240825/styles/bootstrap-5.2.3/bootstrap.min.css" rel="stylesheet" type="text/css" />
+<link href="/sms/20240825/styles/ps-v2.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="/sms/20240825/js/bootstrap-5.2.3/bootstrap.bundle.min.js"></script>
+
+
+
+	<script type="text/javascript">
+	onerror = function(msg,url,l){
+		var txt="_s=5b5e9db0aec477a3e701f61252e3b064&_r=img";
+		txt+="&Msg="+escape(msg);
+		txt+="&URL="+escape(url);
+		txt+="&Line="+l;
+		txt+="&Platform="+escape(navigator.platform);
+		txt+="&UserAgent="+escape(navigator.userAgent);
+		var i = document.createElement("img");
+		i.setAttribute("src", (("https:" == document.location.protocol) ? "https://errorstack.appspot.com" : "http://www.errorstack.com") + "/submit?" + txt);
+		document.body.appendChild(i);
+	}
+	</script>
+
+
+            <script type="text/javascript" src="/sms/20240825/js/scriptaculous-js-1.8.0/lib/prototype.js"></script>
+            <script type="text/javascript" src="/sms/20240825/js/cookie.js"></script>
+
+            
+
+            
+                    <script type="text/javascript"
+                            src="/sms/20240825/js/scriptaculous-js-1.8.0/src/effects.js"></script>
+                
+
+            
+	<link href="/sms/20240825/styles/ps-v2/header-cards.css" rel="stylesheet" type="text/css"/>
+	<link href="/sms/20240825/styles/ps-v2/auction-docs.css" rel="stylesheet" type="text/css"/>
+	<link href="/sms/20240825/styles/ps-v2/auction/auc-grid.css" rel="stylesheet" type="text/css"/>
+	<script type="text/javascript" src="/sms/20240825/js/ps-v2/element-filter.js"></script>
+	<script type="text/javascript" src="/sms/20240825/js/ps-v2/time-left-countdown.js"></script>
+
+
+            
+                    <script type="text/javascript" src="/sms/20240825/js/lightbox-1.2.js"></script>
+                    <link href="/sms/20240825/styles/lightbox-1.2.css" rel="stylesheet" type="text/css"/>
+                    <link href="/sms/20240825/styles/ps-v2/responsive-lightbox-1.2.css" rel="stylesheet" type="text/css"/>
+                
+
+            
+                    <style type="text/css">
+                
+	.right-col {
+		display: flex;
+		flex-direction: column;
+	}
+	@media (max-width: 991.98px) {
+		.me-col {
+			margin-right: 0;
+		}
+	}
+
+                    </style>
+                
+
+            <script type="text/javascript">
+                    function Auction_PopupWindow(thispage, name, params, popup) {
+	if(!popup){
+		if(this.frameElement){
+			document.location.href=thispage;
+			return;
+		}else{
+			if(iframeModalBootstrap){
+				var modal = document.getElementById(name);
+				if (modal == null) {
+					name = 'iframeModal'
+					modal = document.getElementById(name)
+				}
+				if(modal){
+					modal = bootstrap.Modal.getOrCreateInstance(modal);
+					if(modal){
+						modal.show();
+						iframeModalBootstrap(name, thispage);
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	if (name == null) { name = "pop"; }
+	thiswindow = window.open(thispage,'psw_'+name,params);
+}
+                    /**
+     * Sets the 'src' property for an iframe embedded in a given modal.
+     * Creates an event listener event to reset the src value once the modal is hidden.
+     */
+    function iframeModalBootstrap(modalId, iframeSource) {
+        let iframeModal = document.getElementById("iframe"+modalId);
+        if (iframeModal !== null) {
+            iframeModal.setAttribute("src", iframeSource);
+        }
+        let iframeModalBootstrap = document.getElementById(modalId)
+        iframeModalBootstrap.addEventListener('hide.bs.modal', event => {
+            iframeModal.setAttribute("src", "");
+        })
+    }
+                    function loggingOut() {
+ if (confirm('Are you sure you want to logout?')) {
+   self.location.href="/sms/login/logout";
+ }
+}
+                    function loggingIn() {
+  var currLoc;
+  if (self.location.pathname && self.location.pathname.indexOf("/login/") < 0 && self.location.pathname.indexOf("/about/") < 0) {
+    currLoc = "?&dst=" + escape(self.location.pathname.substring("/sms".length) + self.location.search.replace(/\?_mls=(f|m)/, "").replace(/&_mls=(f|m)/, ""));
+  }
+  else {
+    currLoc = "";
+  }
+  self.location.href="/sms/login/login" + currLoc;
+}
+                    function throttle (cb, delay = 200) {
+          let shouldWait = false
+          let waitingArgs = null
+          let timeout
+
+          const timeoutFn = () => {
+            if (waitingArgs === null) {
+              shouldWait = false
+            } else {
+              cb(...waitingArgs)
+              waitingArgs = null
+              setTimeout(timeoutFn, delay)
+            }
+          }
+
+          return (...args) => {
+            if (shouldWait) {
+              waitingArgs = args
+              return
+            }
+
+            cb(...args)
+            shouldWait = true
+
+            clearTimeout(timeout) // Clear the timeout before setting a new one
+            timeout = setTimeout(timeoutFn, delay)
+          }
+        }
+                    function addCustomZoom(targetId, enableZoom = false) {
+		if(!enableZoom) return;
+
+		const handleResize = throttle(() => {
+			setPageScale(targetId)
+		});
+
+		document.addEventListener("DOMContentLoaded", () => setPageScale(targetId))
+		window.addEventListener("resize", () => { handleResize() } )
+	}
+
+	
+		function setPageScale(targetId) {
+			const target = document.getElementById(targetId)
+			if (!target) return
+
+			const baseWidth = 1610;
+			const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+			const currentWidth = window.innerWidth - scrollBarWidth;
+			const currentHeight = window.innerHeight;
+
+			if(currentWidth <= baseWidth) {
+				target.style.transform = 'none';
+				target.style.margin = '0';
+				return;
+			}
+
+			const scalePercentage = Math.round((currentWidth / baseWidth) * 100);
+			target.style.transform = 'scale(' + scalePercentage + '%)';
+
+			const verticalMargin = Math.ceil(((currentHeight * (scalePercentage / 100)) - currentHeight) / 2);
+			const horizontalMargin = Math.ceil((((currentWidth * (scalePercentage / 100)) - currentWidth) / 2) / (scalePercentage / 100));
+
+			target.style.margin = verticalMargin + 'px ' + horizontalMargin + 'px';
+		}
+                    
+	var daysTimeLeftLoc= 'days';
+	var dayTimeLeftLoc= 'day';
+	var hoursTimeLeftLoc= 'hours';
+	var hourTimeLeftLoc= 'hour';
+	var minsTimeLeftLoc= 'mins';
+	var minTimeLeftLoc= 'min';
+	var secsTimeLeftLoc= 'secs';
+	var secTimeLeftLoc= 'sec';
+	var endpointExtendTimeLeft = '/sms/auction/extendedTime';
+	var Netscape = (navigator.appName == "Netscape" ? true:false);
+
+function captureKey(e) {
+    var keycode;
+    var desiredtarget = 'search';
+
+    if (window.event) {
+        keycode = window.event.keyCode;
+    }
+    else if (e && e.target) {
+        if (desiredtarget == null || desiredtarget == e.target.name){
+            keycode = e.which;
+        }
+    }
+    else {
+        return true;
+    }
+
+    if (keycode == 13){
+        Search(document.search);
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+if (document.addEventListener){
+    document.addEventListener('keypress', captureKey, false);
+} else if (document.attachEvent){
+    document.attachEvent('onkeypress', captureKey);
+}
+	function toggleAuctionGridView({ view, tab, saveViewMode }) {
+		if (view === 'g') {
+			document.querySelectorAll('[id^="auctionGridView"]')
+			.forEach(grid => {
+				grid.style.display = '';
+			});
+			document.querySelectorAll('[id^="auctionListView"]')
+			.forEach(grid => {
+				grid.style.display = 'none';
+			});
+			let hideShowImages = document.getElementById('hideShowImages');
+			if (hideShowImages) {
+				hideShowImages.style.display = 'none';
+			}
+		} else {
+			document.querySelectorAll('[id^="auctionListView"]')
+			.forEach(grid => {
+				grid.style.display = '';
+			});
+			let hideShowImages = document.getElementById('hideShowImages');
+			if (hideShowImages) {
+				hideShowImages.style.display = '';
+			}
+			document.querySelectorAll('[id^="auctionGridView"]')
+			.forEach(grid => {
+				grid.style.display = 'none';
+			});
+		}
+
+		if (saveViewMode) {
+			setAuctionViewMode(view, tab);
+		}
+	}
+
+
+
+	function setAuctionViewMode(view, tab) {
+		if(!view || !tab) return;
+
+		new Ajax.Request('/sms/mys/avmc', {
+			method: 'post',
+			parameters: { "view": view, "tab": tab },
+		});
+	}
+	function jsSmsUrl(service,owp) {
+  var url = "/sms";
+  if (owp == null) {
+  }
+  else if (owp != "") {
+     url = url + "/" + owp;
+  }
+  url = url + service;
+  return url;
+}
+
+	function Search(form) {
+	var reg = form.region.options[form.region.selectedIndex].value;
+	if ( reg == "-1" ) {
+	reg = "";
+	}
+	form.page.value = 0;
+	form.action = jsSmsUrl("/browse/search",reg);
+	form.submit();
+	}
+
+	function sort(sorttype, sortDesc) {
+	  document.search.sortBy.value = sorttype;
+	  document.search.sortDesc.value = sortDesc;
+	  document.search.page.value = 0;
+	  document.search.submit();
+	 }
+
+	function srchPage(pageNumber) {
+	document.search.posting.value= "p";
+	document.search.page.value = pageNumber;
+	document.search.submit();
+	}
+	function listimg(stat) {
+	document.search.slth.value = stat;
+	document.search.submit();
+	}
+	function initPage() {
+		Lightbox.initialize({
+	animate:false,
+	resizeSpeed:10,
+	responsive: true,
+	showGroupName:false,
+	strings : {
+		closeLink : '[Close]',
+		loadingMsg : 'loading',nextLink : '[Next &raquo;]',
+		prevLink : '[&laquo; Prev]',
+		startSlideshow : '[Start Slideshow]',
+		stopSlideshow : '[Stop Slideshow]',
+		numDisplayPrefix : 'Image',
+		numDisplaySeparator : 'of',
+		description : 'Description'
+	},
+	closeImage : '/sms/20240825/images/closeLightbox.png',
+	blankImage : '/sms/20240825/images/spacer.gif',
+	rotateLeftImage : '/sms/20240825/images/rotateLeft.png',
+	rotateRightImage : '/sms/20240825/images/rotateRight.png',
+	fullScreenImage : '/sms/20240825/images/fullScreen.png',
+	closeFromFullScreenImage : '/sms/20240825/images/closeFromFullScreen.png',
+	undoFullScreenImage : '/sms/20240825/images/undoFullScreen.png',
+	fullScreenRotateLeftImage : '/sms/20240825/images/fullScreenRotateLeft.png',
+	fullScreenRotateRightImage : '/sms/20240825/images/fullScreenRotateRight.png',
+	urlAjax : '/sms/aet/ajax',
+	txnId : '',
+	isIE8 : false,
+	isIE10Plus : false,
+	showEditDescription : false
+		,lightboxWidth : 1024,lightboxHeight : 768, fullscreenWidth: 1024, fullscreenHeight: 768, enableFullScreen: false, enableSlideshow:false, enableSlideshowFullScreen:false,enableZoom:true
+	,coldscreen: '',
+	auctionid:''
+});
+
+	}
+
+	var hiddenAuctionsTimeLeft;
+		hiddenAuctionsTimeLeft = 5400;
+	function timeLeftCallback() {
+		hiddenAuctionsTimeLeft--;
+		if (hiddenAuctionsTimeLeft == 0) {
+			document.getElementById("toggleButtons").remove();
+			document.getElementById("auctionListView").remove();
+			document.getElementById("hideShowImages").remove();
+			document.getElementById("noAuctionsFound").classList.remove("d-none");
+		}
+	}
+
+   	function acceptCookies() 
+	{
+		var aYearFromNow = new Date();
+		aYearFromNow.setFullYear(aYearFromNow.getFullYear() + 1);
+		
+		$('cookiesAcceptedDiv').hide();
+		setCookie("cookiesAccepted_1", "Y", aYearFromNow, '/');
+	}
+
+                    addCustomZoom('zoom-target-id');
+            </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ML1H9LELDC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'G-ML1H9LELDC');
+    </script>
+        </head>
+
+        <body id="main-body-id" onLoad = "initPage();" >
+
+    <div class="modal fade" id="iframeModal" tabindex="-1" role="dialog"
+         aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true" data-bs-focus="true"
+    >
+        <div class="modal-dialog d-flex align-items-center" style="--bs-modal-width: 60rem;height: calc(100% - var(--bs-modal-margin) * 2);">
+            <div class="modal-content h-100" style="max-height: 54rem">
+                <div class="modal-body p-1 h-100">
+                    <div class="embed-responsive z-depth-1-half h-100">
+                        <iframe id="iframeiframeModal" class="embed-responsive-item w-100 h-100" src=""/></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+            
+
+
+
+            <a class="skiplink" href="#startcontent" style="display:none;">
+                Skip over navigation
+            </a>
+
+            <div id="zoom-target-id" class="h-100">
+                    <header>
+
+
+
+
+
+	
+	<div class="header">
+	<script type="text/javascript">
+		//
+		var navfuncs = {
+		 	selectApp : function(sapp) {
+		 	    if (sapp == 'gems') {
+		   			document.location.href = "http://www.publicpurchase.com" + "/gems/browse/home";
+		   		}
+		 	  	if (sapp == 'con') {
+		  			document.location.href = "http://www.publicpurchase.com" + "/contract/home/home";
+		  		} 
+				if (sapp == 'req') {
+		  			document.location.href = "http://" + "/gems/pr/home/dash";
+		  		} 
+		  		if (sapp == 'vendor') {
+		  			document.location.href = "http://www.publicpurchase.com" + "/vendor/agency/home";
+		  		}
+		  		if (sapp == 'cat') {
+		  			document.location.href = "http://" + "/gems/cat/home/dash";
+		  		}
+		  		if (sapp == 'portal') {
+		  			document.location.href = "http://www.publicpurchase.com" + "/portal/view/home";
+		  		}
+		  		if (sapp == 'surplus') {
+		  			document.location.href = "http://www.publicsurplus.com" + "/sms/browse/home";
+		  		}
+		 	}
+		 }
+	 </script>
+		 <div class="logo">
+		       <a href="javascript:navfuncs.selectApp('surplus');"><img style="width: 249px" src="/sms/20240825/images/pslogo.svg" title="Public Surplus Logo" alt="Public Surplus" border="0"/></a>
+	     </div>
+		
+    <script type="text/javascript">
+        var pslanguage = "en";
+    </script>
+
+    <div class="pb-1 d-flex justify-content-end me-2 mt-2 ms-lg-0 ms-auto mb-md-2 mb-lg-0 align-self-start language-container">
+        <div
+                id="langdiv"
+                class="ps-lang-position"
+                onmouseover="$('langlistdiv').show();"
+                onmouseout="$('langlistdiv').hide();"
+        >
+            <script type="text/javascript">
+                function base_changeLangugage(locale) {
+                    if (locale == null) { return; }
+                    new Ajax.Request('/sms/about/home.ftlh?locale='+locale, {
+                        onComplete: function() {
+                            document.location.reload();
+                        }
+                    });
+                }
+            </script>
+
+            <div class="ps-lang-menu">
+                <a class="d-flex align-items-center justify-content-between">
+                    <img style="vertical-align: top; padding-top: 2px;" alt="English" src="/sms/20240825/images/ps/en.png"/>English
+
+<i title="More Languages" data-bs-toggle="tooltip" aria-label="More Languages" data-bs-custom-class="icon-tooltip" class="bi bi-caret-down-fill small me-2" style="color: var(--ps-color-white); "></i>                </a>
+            </div>
+
+            <div id="langlistdiv" class="ps-lang-list" style="display: none;">
+                <ul class="ps-0 mb-0 py-2">
+                            <li>
+                                <a class="d-flex align-items-center justify-content-start" href="javascript:base_changeLangugage('es');"/>
+                                    <img style="vertical-align: top; padding-top: 2px;" alt="Spanish" src="/sms/20240825/images/ps/es.png"/>Spanish
+
+                                </a>
+                            </li>
+                            <li>
+                                <a class="d-flex align-items-center justify-content-start" href="javascript:base_changeLangugage('fr');"/>
+                                    <img style="vertical-align: top; padding-top: 2px;" alt="French" src="/sms/20240825/images/ps/fr.png"/>French
+
+                                </a>
+                            </li>
+                    <li>
+                        <a class="d-flex align-items-center justify-content-start" href="/sms/?_mls=m">
+<i aria-hidden="true" class="bi bi-universal-access-circle me-2 pe-1" style="color: var(--ps-color-dark-blue-plus); "></i>                            WCAG
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+	
+	 </div>
+	 <div class="small header-change-theme" style="text-align: right; padding-right: 8px">
+		<script type="text/javascript">
+			var themes = {
+				changeTheme : function(input){
+					if($(input).getValue() != "") {
+						new Ajax.Request('/sms/login/changeTheme?theme=' + $(input).getValue(), {
+							method: 'post',
+							onSuccess: function (transport) {
+								location.reload(true);
+							}
+						});
+					}
+				}
+			}
+		</script>
+		<label for="themeSelector" style="display: initial;">Theme</label>
+		<select onchange="themes.changeTheme(this)" id="themeSelector" class="theme-selector">
+						<option  value="ps">Classic</option>
+						<option selected="selected" value="psV2">Responsive</option>
+		</select>
+	 </div>
+
+	
+
+
+<!--
+ -->
+
+	<nav
+		class="ps-main-bar d-flex flex-wrap navbar navbar-expand-md navbar-light py-0 mt-2 d-print-none"
+		style="margin-top: 1rem !important;"
+	>
+		<div class="menu-button-container d-flex d-md-none w-100 pe-2 py-2 mt-1">
+			<button
+					class="navbar-toggler-menu-button navbar-toggler d-flex ms-auto"
+					type="button"
+					data-bs-toggle="collapse"
+					data-bs-target="#navbarTogglerMenu"
+					aria-controls="navbarTogglerMenu"
+					aria-expanded="false"
+					aria-label="Toggle navigation"
+			>
+				<span class="navbar-toggler-icon align-self-center"></span>
+			</button>
+		</div>
+
+		<div id="navbarTogglerMenu" class="top-menu collapse navbar-collapse h-100">
+			<div class="navbar-nav top-menu__left nav-sup-left">
+<a
+class="noborder"
+href="javascript:Auction_PopupWindow('/sms/help/onlineHelp.ftlh','onlineHelp','width=540,height=400,scrollbars=yes,resizable=yes', true);"
+>
+Chat
+<span class="ms-1 nav-bar-chat" title="Live Chat" aria-label="Live Chat" data-bs-custom-class="icon-tooltip">
+<i class="bi bi-chat-left-dots-fill" style="position: absolute; font-size: 0.92rem; color: var(--ps-color-light-blue); color: var(--ps-color-white)"></i>
+<i class="bi bi-chat-right" style="position: relative; top: -4px; left: 6px; font-size: 0.92rem; color: var(--ps-color-light-blue); color: var(--ps-color-white)"></i>
+</span></a>    <span class="d-none d-md-inline">|</span>
+<a
+href="#iframeModal"
+data-bs-toggle="modal"
+data-bs-target="#iframeModal"
+onclick="iframeModalBootstrap('iframeModal', '/sms/help/mainhelp.ftlh?frame1=public/info.ftlh&amp;frame2=public/info_email.ftlh');"
+>
+Help
+</a>    <span class="d-none d-md-inline">|</span>
+					<a href="javascript:loggingIn();">
+						Login
+					</a>
+			</div>
+
+			<div class="navbar-nav top-menu__right nav-sup-right">
+				<a  href="/sms/browse/home?tm=m"
+				   target="_top" >
+					Home
+				</a>    <span class="d-none d-md-inline">|</span>
+
+				<a  href="/sms/browse/allcat?tm=m"
+				   target="_top" >
+					Browse
+				</a>    <span class="d-none d-md-inline">|</span>
+
+
+				<a class="nav-sup-right-on" href="/sms/browse/search?tm=m"
+				   target="_top" >
+					Search
+				</a>
+					    <span class="d-none d-md-inline">|</span>
+<a  href="/sms/about/home.ftlh">
+						About</a>			</div>
+		</div>
+	</nav>
+
+<div class="w-100 ps-border-bottom-gross d-none d-md-block"></div>
+
+
+
+                    </header>
+
+                <main class="ps-container d-flex flex-wrap flex-column">
+                    <div class="d-flex flex-wrap content-container w-100">
+                        <aside class="left-col">
+                            
+                            
+                                    <div class="brand-box  p-3 text-center">
+</div>
+
+                                
+                            
+                        </aside>
+
+                        <section class="d-flex flex-column right-col" color="gray">
+                            
+
+                            <span id="startcontent"></span>
+
+                            
+
+
+<div class="container-fluid ps-side-home__content__cards d-flex flex-wrap flex-md-nowrap justify-content-center py-3">
+	<div class="ps-side-card-container me-md-2">
+		<div class="ps-side-card">
+			<div class="ps-side-card--img">
+				<img src="/sms/20240825/images/ps/img_indexllave.jpg" alt="Graphic of an old key."/>
+			</div>
+
+			<div class="ps-side-card--body">
+				<h5 class="card-title ps-card__body--title mb-2 mb-md-0">
+					Register to become <br>part of Public Surplus
+				</h5>
+				<div class="ps-card__body--children">
+					Click the button below to become a buyer, or <a class="fw-bold" href="/sms/about/contactus.ftlh">Contact Us</a> for more information.
+					<br/>
+					<button
+						class="ps-button"
+						color="light"
+						type="button"
+						id="Submit32"
+						onclick="self.location.href='/sms/register/user';"
+					>
+						Register
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="ps-side-card-container me-md-2">
+		<div class="ps-side-card">
+			<div class="ps-side-card--img">
+				<img src="/sms/20240825/images/ps/img_indexcompu.jpg" class="imageHome" alt='Image of searching'/>
+			</div>
+
+			<div class="ps-side-card--body">
+				<h5 class="card-title ps-card__body--title mb-2 mb-md-0">
+					Looking for a <br/>specific item?
+				</h5>
+
+				<div class="ps-card__body--children">
+					<form action="/sms/browse/search" method="GET" name="searchCard" onsubmit="updateScopeValue()">
+						<input type="hidden" name="posting" value="y"/>
+						<input type="hidden" name="scope" id="searchScope" value=""/>
+						<label for="keyWord">
+							Let us help you find what you are looking for.
+						</label>
+
+						<div class="d-flex justify-content-end mt-2">
+							<input class="form-control" id="keyWord" name="keyWord" type="text" size="20"/>
+							<button class="ps-button ms-2" color="light" type="submit" name="Submit4">
+								Search
+							</button>
+						</div>
+
+						<div class="form-check form-switch pt-2">
+							<input
+								class="form-check-input"
+								type="checkbox"
+								role="switch"
+								id="areaParams"
+								checked
+							/>
+							<label class="form-check-label" for="areaParams">
+								Filtered Search
+							</label>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="ps-side-card-container">
+		<div class="ps-side-card">
+			<div class="ps-side-card--img">
+				<img src="/sms/20240825/images/ps/img_indexmundo.jpg" class="imageHome" alt='Graphic image of flat globe'/>
+			</div>
+
+			<div class="ps-side-card--body">
+				<h5 class="card-title ps-card__body--title mb-2 mb-md-0">
+					Browse auctions <br>within area
+				</h5>
+
+				<div class="ps-card__body--children">
+				</div>
+
+				<div class="mt-2">
+<div class="select dropdown">
+	<label class="input-group" data-bs-toggle="dropdown" data-bs-display="static">
+		<input class="form-control place-strong"
+		       type="text"
+		       placeholder='Select Region'
+		       onkeyup="filterShowOnly('.region.dropdown-menu li', value); tabOnDown(this, event);"
+		       aria-describedby="region-select-caret"
+		/>
+		<span class="input-group-text" id="region-select-caret">
+<i aria-hidden="true" class="bi bi-caret-right-fill down" style="color: var(--ps-color-white); color: var(--ps-color-black);"></i><i aria-hidden="true" class="bi bi-caret-down-fill up" style="color: var(--ps-color-white); color: var(--ps-color-black);"></i>        </span>
+	</label>
+
+	<ul class="region shaded dropdown-menu">
+			<li>
+				<a class="dropdown-item" href="/sms/all,al/browse/search">
+                    Alabama
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ak/browse/search">
+                    Alaska
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,as/browse/search">
+                    American Samoa
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,az/browse/search">
+                    Arizona
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ar/browse/search">
+                    Arkansas
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ca/browse/search">
+                    California
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,co/browse/search">
+                    Colorado
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ct/browse/search">
+                    Connecticut
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,de/browse/search">
+                    Delaware
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,fl/browse/search">
+                    Florida
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ga/browse/search">
+                    Georgia
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,gu/browse/search">
+                    Guam
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,hi/browse/search">
+                    Hawaii
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,id/browse/search">
+                    Idaho
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,il/browse/search">
+                    Illinois
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,in/browse/search">
+                    Indiana
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ia/browse/search">
+                    Iowa
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ks/browse/search">
+                    Kansas
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ky/browse/search">
+                    Kentucky
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,la/browse/search">
+                    Louisiana
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,me/browse/search">
+                    Maine
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,md/browse/search">
+                    Maryland
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ma/browse/search">
+                    Massachusetts
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,mi/browse/search">
+                    Michigan
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,mn/browse/search">
+                    Minnesota
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ms/browse/search">
+                    Mississippi
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,mo/browse/search">
+                    Missouri
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,mt/browse/search">
+                    Montana
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ne/browse/search">
+                    Nebraska
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nv/browse/search">
+                    Nevada
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nh/browse/search">
+                    New Hampshire
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nj/browse/search">
+                    New Jersey
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nm/browse/search">
+                    New Mexico
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ny/browse/search">
+                    New York
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nc/browse/search">
+                    North Carolina
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nd/browse/search">
+                    North Dakota
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,oh/browse/search">
+                    Ohio
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ok/browse/search">
+                    Oklahoma
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,or/browse/search">
+                    Oregon
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,pa/browse/search">
+                    Pennsylvania
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,pr/browse/search">
+                    Puerto Rico
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ri/browse/search">
+                    Rhode Island
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,sc/browse/search">
+                    South Carolina
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,sd/browse/search">
+                    South Dakota
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,tn/browse/search">
+                    Tennessee
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,tx/browse/search">
+                    Texas
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,vi/browse/search">
+                    U.S. Virgin Islands
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ut/browse/search">
+                    Utah
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,vt/browse/search">
+                    Vermont
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,va/browse/search">
+                    Virginia
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,wa/browse/search">
+                    Washington
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,dc/browse/search">
+                    Washington D.C.
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,wv/browse/search">
+                    West Virginia
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,wi/browse/search">
+                    Wisconsin
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,wy/browse/search">
+                    Wyoming
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ab/browse/search">
+                    Alberta
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,bc/browse/search">
+                    British Columbia
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,mb/browse/search">
+                    Manitoba
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nb/browse/search">
+                    New Brunswick
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nl/browse/search">
+                    Newfoundland and Labrador
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nt/browse/search">
+                    Northwest Territories
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,ns/browse/search">
+                    Nova Scotia
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,nu/browse/search">
+                    Nunavut
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,on/browse/search">
+                    Ontario
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,pe/browse/search">
+                    Prince Edward Island
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,qc/browse/search">
+                    Quebec
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,sk/browse/search">
+                    Saskatchewan
+				</a>
+			</li>
+			<li>
+				<a class="dropdown-item" href="/sms/all,yt/browse/search">
+                    Yukon
+				</a>
+			</li>
+	</ul>
+</div>
+
+				</div>
+
+				<div class="mt-2">
+
+<div class="select dropdown">
+    <label class="input-group" data-bs-toggle="dropdown" data-bs-display="static">
+        <input class="form-control place-strong"
+               type="text"
+               placeholder='Select Agency'
+               onkeyup="filterShowOnly('.agency.dropdown-menu li', value); tabOnDown(this, event);"
+               aria-describedby="agency-select-caret"
+        />
+        <span class="input-group-text" id="agency-select-caret">
+<i aria-hidden="true" class="bi bi-caret-right-fill down" style="color: var(--ps-color-white); color: var(--ps-color-black);"></i><i aria-hidden="true" class="bi bi-caret-down-fill up" style="color: var(--ps-color-white); color: var(--ps-color-black);"></i>        </span>
+    </label>
+    <ul class="agency shaded dropdown-menu">
+            <li>
+                <strong class="dropdown-item disabled text-dark">
+                    Please select region first
+                </strong>
+            </li>
+    </ul>
+</div>
+
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	function updateScopeValue() {
+		let areaParamsSwitch = document.querySelector('#areaParams');
+		let scopeField = document.querySelector('#searchScope');
+
+		if(!areaParamsSwitch || !scopeField) return;
+
+		if (areaParamsSwitch.checked) {
+			scopeField.value = "";
+		} else {
+			scopeField.value = "all";
+		}
+	}
+</script>
+
+
+	<h1 class="nav-sub-head fs-6">
+		Search Auctions
+	</h1>
+
+
+                            
+
+	<div class="py-4 px-3 px-lg-4">
+
+		<form action="/sms/browse/search" method="GET" name="search">
+			<input type="hidden" name="posting" value="y"/>
+			<input type="hidden" name="slth" value=""/>
+			<input type="hidden" name="page"
+				   value="0"/>
+			<input type="hidden" name="sortBy" value=""/>
+ 			<input type="hidden" name="sortDesc" value="N" />
+
+			<div class="row mb-4 align-items-center">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0">
+					<label for="keyword">
+						Keyword
+					</label>
+				</div>
+				<div class="col-12 col-lg-8 col-xl-7 col-xxl-5">
+					<input id="keyword"
+						   class="form-control"
+						   type="text"
+						   value=""
+						   name="keyWord"
+					/>
+				</div>
+			</div>
+
+			<div class="row mb-4 align-items-center">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0">
+					<label for="InCategory">
+						In Category
+					</label>
+				</div>
+				<div class="col col-lg-4">
+					<select name="catId" class="form-select" id="InCategory">
+						<option value="-1" >
+							All Categories
+						</option>
+							<option value="22" >
+								Airport
+							</option>
+							<option value="24" >
+								Animals and Livestock
+							</option>
+							<option value="19" >
+								Aviation
+							</option>
+							<option value="10" >
+								Building
+							</option>
+							<option value="16" >
+								Clothing
+							</option>
+							<option value="18" >
+								Collectibles
+							</option>
+							<option value="1" >
+								Computers
+							</option>
+							<option value="2" >
+								Electronics
+							</option>
+							<option value="8" >
+								Food Supply
+							</option>
+							<option value="28" >
+								For Children
+							</option>
+							<option value="14" >
+								Furniture
+							</option>
+							<option value="17" >
+								Heavy Equipment
+							</option>
+							<option value="29" >
+								Heavy Equipment Parts
+							</option>
+							<option value="27" >
+								Housewares
+							</option>
+							<option value="6" >
+								Industrial Equipment
+							</option>
+							<option value="11" >
+								Jewelry
+							</option>
+							<option value="20" >
+								Marine
+							</option>
+							<option value="23" >
+								Medical
+							</option>
+							<option value="4" >
+								Motor Pool
+							</option>
+							<option value="21" >
+								Motor Pool Parts
+							</option>
+							<option value="13" >
+								Music and Arts
+							</option>
+							<option value="3" >
+								Office Equipment
+							</option>
+							<option value="12" >
+								Outdoor Equipment
+							</option>
+							<option value="15" >
+								Real Estate
+							</option>
+							<option value="9" >
+								School Supplies
+							</option>
+							<option value="25" >
+								Scrap
+							</option>
+							<option value="5" >
+								Sporting Goods
+							</option>
+							<option value="26" >
+								Storage
+							</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="row mb-4 align-items-center" id="currentOptions">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0">
+					<label for="AucEndIn">
+						Auctions Ending In
+					</label>
+				</div>
+				<div class="col-12 col-lg-8 col-xl-7 col-xxl-5 d-flex flex-wrap flex-sm-nowrap">
+					<div class="col-12 col-sm">
+						<select id="AucEndIn"
+								class="form-select "
+								name="endHours"
+						>
+							<option value="-1" >
+								No Limit
+							</option>
+							<option value="1" >
+								1 hour
+							</option>
+							<option value="6" >
+								6 hours
+							</option>
+							<option value="24" >
+								1 day
+							</option>
+							<option value="120" >
+								5 days
+							</option>
+							<option value="240" >
+								10 days
+							</option>
+						</select>
+					</div>
+					<label class="col-12 col-sm-auto text-md-center px-sm-2" for="startsOn">
+						or that Started In
+					</label>
+					<div class="col-12 col-sm">
+						<select
+								class="form-select "
+								name="startHours"
+								id="startsOn"
+						>
+							<option value="-1" >
+								All
+							</option>
+							<option value="1" >
+								the last hour
+							</option>
+							<option value="24" >
+								the last day
+							</option>
+							<option value="48" >
+								the last 2 days
+							</option>
+							<option value="168" >
+								the last week
+							</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row mb-1 align-items-center">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0">
+					<label for="PriceRange">
+						Price Range
+					</label>
+				</div>
+				<div class="col-12 col-lg-8 col-xl-7 col-xxl-5">
+					<div class="row align-items-center">
+						<span class="col-12 col-sm-auto text-md-center">
+							From
+						</span>
+
+						<div class="col-12 col-sm input-group">
+							<span class="input-group-text" id="lowerPrice">$</span>
+							<input type="text" id="PriceRange"
+								   class="col form-control"
+								   value="0"
+								   name="lowerPrice"
+								   aria-describedby="lowerPrice"
+								   maxlength="8"
+								   size="6"
+							/>
+						</div>
+
+						<span class="col-12 col-sm-auto text-md-center">
+							To
+						</span>
+
+						<div class="col-12 col-sm input-group">
+							<span class="input-group-text" id="higherPrice">$</span>
+							<input type="text"
+								   class="col form-control"
+								   value="0"
+								   name="higherPrice"
+								   aria-describedby="higherPrice"
+								   maxlength="8"
+								   size="6"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row mb-4 align-items-center">
+				<div class="col offset-lg-4">
+					(
+					leave blank to see all auctions
+					)
+				</div>
+			</div>
+
+			<div class="row mb-4 align-items-center">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0">
+					<label for="Located">
+						Located
+					</label>
+				</div>
+				<div class="col-12 col-lg-8 col-xl-7 col-xxl-5 d-flex flex-wrap flex-sm-nowrap">
+					<div class="col-12 col-sm">
+						<select id="Located" class="form-select" name="milesLocation">
+							<option value="-1" >
+								All
+							</option>
+							<option value="20" >20</option>
+							<option value="50" >50</option>
+							<option value="100" >100</option>
+							<option value="200" >200</option>
+							<option value="300" >300</option>
+							<option value="400" >400</option>
+							<option value="500" >500</option>
+							<option value="600" >600</option>
+							<option value="700" >700</option>
+							<option value="800" >800</option>
+							<option value="900" >900</option>
+							<option value="1000" >1000</option>
+						</select>
+					</div>
+					<label class="col-12 col-sm-auto text-md-center px-sm-2" for="fromZip">
+						miles from zip code &nbsp;
+					</label>
+					<div class="col-12 col-sm">
+						<input
+							class="form-control"
+							type="text"
+							name="zipCode"
+							size="10"
+							value=""
+							id="fromZip"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="row mb-4 align-items-center">
+				<div class="col-12 col-lg-4 text-lg-end mb-2 mb-lg-0"
+					 
+				>
+					<label for="inRegion">
+						In Region
+					</label>
+				</div>
+				<div class="col col-lg-4">
+					<select id="inRegion" class="form-select" name="region">
+						<option value="" selected>All</option>
+
+    <option value="all,al" >
+        Alabama
+    </option>
+    <option value="all,ak" >
+        Alaska
+    </option>
+    <option value="all,as" >
+        American Samoa
+    </option>
+    <option value="all,az" >
+        Arizona
+    </option>
+    <option value="all,ar" >
+        Arkansas
+    </option>
+    <option value="all,ca" >
+        California
+    </option>
+    <option value="all,co" >
+        Colorado
+    </option>
+    <option value="all,ct" >
+        Connecticut
+    </option>
+    <option value="all,de" >
+        Delaware
+    </option>
+    <option value="all,fl" >
+        Florida
+    </option>
+    <option value="all,ga" >
+        Georgia
+    </option>
+    <option value="all,gu" >
+        Guam
+    </option>
+    <option value="all,hi" >
+        Hawaii
+    </option>
+    <option value="all,id" >
+        Idaho
+    </option>
+    <option value="all,il" >
+        Illinois
+    </option>
+    <option value="all,in" >
+        Indiana
+    </option>
+    <option value="all,ia" >
+        Iowa
+    </option>
+    <option value="all,ks" >
+        Kansas
+    </option>
+    <option value="all,ky" >
+        Kentucky
+    </option>
+    <option value="all,la" >
+        Louisiana
+    </option>
+    <option value="all,me" >
+        Maine
+    </option>
+    <option value="all,md" >
+        Maryland
+    </option>
+    <option value="all,ma" >
+        Massachusetts
+    </option>
+    <option value="all,mi" >
+        Michigan
+    </option>
+    <option value="all,mn" >
+        Minnesota
+    </option>
+    <option value="all,ms" >
+        Mississippi
+    </option>
+    <option value="all,mo" >
+        Missouri
+    </option>
+    <option value="all,mt" >
+        Montana
+    </option>
+    <option value="all,ne" >
+        Nebraska
+    </option>
+    <option value="all,nv" >
+        Nevada
+    </option>
+    <option value="all,nh" >
+        New Hampshire
+    </option>
+    <option value="all,nj" >
+        New Jersey
+    </option>
+    <option value="all,nm" >
+        New Mexico
+    </option>
+    <option value="all,ny" >
+        New York
+    </option>
+    <option value="all,nc" >
+        North Carolina
+    </option>
+    <option value="all,nd" >
+        North Dakota
+    </option>
+    <option value="all,oh" >
+        Ohio
+    </option>
+    <option value="all,ok" >
+        Oklahoma
+    </option>
+    <option value="all,or" >
+        Oregon
+    </option>
+    <option value="all,pa" >
+        Pennsylvania
+    </option>
+    <option value="all,pr" >
+        Puerto Rico
+    </option>
+    <option value="all,ri" >
+        Rhode Island
+    </option>
+    <option value="all,sc" >
+        South Carolina
+    </option>
+    <option value="all,sd" >
+        South Dakota
+    </option>
+    <option value="all,tn" >
+        Tennessee
+    </option>
+    <option value="all,tx" >
+        Texas
+    </option>
+    <option value="all,vi" >
+        U.S. Virgin Islands
+    </option>
+    <option value="all,ut" >
+        Utah
+    </option>
+    <option value="all,vt" >
+        Vermont
+    </option>
+    <option value="all,va" >
+        Virginia
+    </option>
+    <option value="all,wa" >
+        Washington
+    </option>
+    <option value="all,dc" >
+        Washington D.C.
+    </option>
+    <option value="all,wv" >
+        West Virginia
+    </option>
+    <option value="all,wi" >
+        Wisconsin
+    </option>
+    <option value="all,wy" >
+        Wyoming
+    </option>
+    <option value="all,ab" >
+        Alberta
+    </option>
+    <option value="all,bc" >
+        British Columbia
+    </option>
+    <option value="all,mb" >
+        Manitoba
+    </option>
+    <option value="all,nb" >
+        New Brunswick
+    </option>
+    <option value="all,nl" >
+        Newfoundland and Labrador
+    </option>
+    <option value="all,nt" >
+        Northwest Territories
+    </option>
+    <option value="all,ns" >
+        Nova Scotia
+    </option>
+    <option value="all,nu" >
+        Nunavut
+    </option>
+    <option value="all,on" >
+        Ontario
+    </option>
+    <option value="all,pe" >
+        Prince Edward Island
+    </option>
+    <option value="all,qc" >
+        Quebec
+    </option>
+    <option value="all,sk" >
+        Saskatchewan
+    </option>
+    <option value="all,yt" >
+        Yukon
+    </option>
+					</select>
+				</div>
+			</div>
+
+			<div class="d-flex flex-nowrap justify-content-between">
+				<div class="col offset-lg-4">
+					<button
+						type="submit"
+						name="search"
+						color="light"
+						class="ps-button ms-lg-2"
+						onclick="Search(document.search);"
+					>
+						Search
+					</button>
+				</div>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+		hideLazyImagesLoadingIcon();
+	});
+
+	function hideLazyImagesLoadingIcon() {
+		const lazyImgContainers = document.querySelectorAll('.lazy-loading-container-loader');
+
+		lazyImgContainers?.forEach((container) => {
+			const lazyImg = container.querySelector('.lazy-img-loading');
+			let lazyIcon = container.querySelector('.lazy-loading-icon');
+
+			if (!lazyIcon || !lazyImg) return;
+
+			//Due to cache, the completion of image loading may occur before the 'load' event listener can be set.
+			if(lazyImg.complete) {
+				lazyIcon.style = 'display: none';
+				return;
+			}
+
+			lazyImg.onerror = function() {
+				lazyIcon.style = 'display: none';
+			}
+
+			lazyImg.addEventListener('load', function() {
+				lazyIcon.style = 'display: none';
+			});
+		});
+		loadInfoIcon();
+	}
+
+	function loadInfoIcon() {
+		document.querySelectorAll('[id^="bi_"]').forEach(infoIcon => {
+			let popoverIcon = new bootstrap.Popover(infoIcon, {
+				html : true,
+				trigger: 'focus hover',
+				delay: { "hide": 100 }, // Used to allow a click on the icon's anchor.
+				sanitize: false,
+				content: function() {
+					return document.querySelector(infoIcon.getAttribute("data-popover-content")).innerHTML;
+				}
+			});
+			infoIcon.addEventListener('shown.bs.popover', () => {
+				popoverIcon.tip.getElementsBySelector('[data-bs-custom-class="icon-tooltip"]').forEach(icon => {
+					activateIconTooltip(icon);
+				});
+			});
+			infoIcon.addEventListener('hide.bs.popover', () => {
+				popoverIcon.tip.getElementsBySelector('[data-bs-custom-class="icon-tooltip"]').forEach(icon => {
+					disposeIconTooltip(icon);
+				});
+			});
+		});
+	}
+	</script>
+
+					<div id="toggleButtons" class="col col-lg-4 text-end">
+	<span class="ps-2">
+		View
+		<button class="ps-button text-center ps-2" color="link" type="button" onclick="toggleAuctionGridView({ view: 'g', tab:'search', saveViewMode: 'true' });">
+<i title="Grid view" data-bs-toggle="tooltip" aria-label="Grid view" data-bs-custom-class="icon-tooltip" class="bi bi-grid " style="color: var(--ps-color-gray); "></i>		</button>
+		<button class="ps-button text-center px-2" color="link" type="button" onclick="toggleAuctionGridView({ view: 'l', tab:'search', saveViewMode: 'true' });">
+<i title="List view" data-bs-toggle="tooltip" aria-label="List view" data-bs-custom-class="icon-tooltip" class="bi bi-list " style="color: var(--ps-color-gray); "></i>		</button>
+	</span>
+					</div>
+			</div>
+		</form>
+	</div>
+		<div class="me-col">
+	<div class="ajax-loading-pagination">
+			<div class="d-flex justify-content-center align-items-center mt-2">
+					<span class="fw-bold a disabled me-2">
+						<span class="small">&laquo;</span>
+					</span>
+					<span class="fw-bold a disabled me-2">
+					   <span class="small me-1">&#139;</span>Prev
+					</span>
+					<strong class="me-2">
+						1
+					</strong>
+								<span class="me-2" role="button" onclick="srchPage('1');">
+						2
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('2');">
+						3
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('3');">
+						4
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('4');">
+						5
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('5');">
+						6
+					</span>
+			&nbsp;
+				<span class="fw-bold me-2" role="button" onclick="srchPage('1');">
+					 Next<span class="small ms-1">&#155;</span>
+				</span>
+				<span class="fw-bold me-2" role="button" onclick="srchPage('215');">
+					<span class="small">&raquo;</span>
+				</span>
+		  </div>
+	</div>
+
+		</div>
+
+                        </section>
+                    </div>
+
+                    
+		<div class="wide-content-container">
+			<div class="w-100 ps-border-bottom-gross d-none d-md-block"></div>
+				<div id="auctionGridView" class="w-100 p-2" >
+		<div class="mb-2 auction-items__container" id="auction_item">
+			<section class="w-100 ps-card-feat"  id="auctionsListContainer">
+
+
+				<div class="auction-item" id="3975929searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3975929"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3975929/69170753"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							CA
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3975929searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3975929"
+								title="#3975929 - KQI3 Pro Scooter (107351) "
+							>
+								#3975929 - KQI3 Pro Scooter (107351)
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3975929searchGrid">
+										$132.50
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3975929searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3975929searchGrid" class="fw-bold text-danger">
+					2 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3975929, "3975929searchGrid",
+				1776028895760, 1776029038277, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983908searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983908"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983908/69348133"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983908searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983908"
+								title="#3983908 - Auction#206- Country server"
+							>
+								#3983908 - Auction#206- Country server
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983908searchGrid">
+										$92.50
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983908searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983908searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983908, "3983908searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983548searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983548"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983548/69340364"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983548searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983548"
+								title="#3983548 - Auction#185- Storage bench"
+							>
+								#3983548 - Auction#185- Storage bench
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983548searchGrid">
+										$36.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983548searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983548searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983548, "3983548searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983831searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983831"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983831/69345996"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983831searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983831"
+								title="#3983831 - Auction#197- Country server"
+							>
+								#3983831 - Auction#197- Country server
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983831searchGrid">
+										$110.50
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983831searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983831searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983831, "3983831searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983642searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983642"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983642/69342113"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983642searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983642"
+								title="#3983642 - Auction#193- Set of toy cars/comand center"
+							>
+								#3983642 - Auction#193- Set of toy cars/coma...
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983642searchGrid">
+										$8.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983642searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983642searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983642, "3983642searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983631searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983631"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983631/69341691"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983631searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983631"
+								title="#3983631 - Auction#192- Cube oranizer "
+							>
+								#3983631 - Auction#192- Cube oranizer
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983631searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983631searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983631searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983631, "3983631searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3975932searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3975932"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3975932/69170790"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							CA
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3975932searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3975932"
+								title="#3975932 - K2 Bike (107352) "
+							>
+								#3975932 - K2 Bike (107352)
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3975932searchGrid">
+										$10.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3975932searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3975932searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3975932, "3975932searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983511searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983511"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983511/69339633"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983511searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983511"
+								title="#3983511 - Auction#183- Mini Freezer"
+							>
+								#3983511 - Auction#183- Mini Freezer
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983511searchGrid">
+										$47.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983511searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983511searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983511, "3983511searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983838searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983838"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983838/69103172"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983838searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983838"
+								title="#3983838 - Auction#199- Clock"
+							>
+								#3983838 - Auction#199- Clock
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983838searchGrid">
+										$2.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983838searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983838searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983838, "3983838searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983877searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983877"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983877/69347238"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983877searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983877"
+								title="#3983877 - Auction#202- Metal shelving"
+							>
+								#3983877 - Auction#202- Metal shelving
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983877searchGrid">
+										$15.50
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983877searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983877searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983877, "3983877searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983581searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983581"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983581/69340943"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983581searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983581"
+								title="#3983581 - Auction#187- Train toy"
+							>
+								#3983581 - Auction#187- Train toy
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983581searchGrid">
+										$1.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983581searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983581searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983581, "3983581searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983881searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983881"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983881/69347628"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983881searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983881"
+								title="#3983881 - Auction#203- Arm chair"
+							>
+								#3983881 - Auction#203- Arm chair
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983881searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983881searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983881searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983881, "3983881searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983890searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983890"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983890/69347694"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983890searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983890"
+								title="#3983890 - Auction#204- Arm chair"
+							>
+								#3983890 - Auction#204- Arm chair
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983890searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983890searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983890searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983890, "3983890searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983575searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983575"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983575/69340397"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983575searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983575"
+								title="#3983575 - Auction#186- Giraffe canvas"
+							>
+								#3983575 - Auction#186- Giraffe canvas
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983575searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983575searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983575searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983575, "3983575searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983899searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983899"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983899/69347817"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983899searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983899"
+								title="#3983899 - Auction#205- Under the sea canvas"
+							>
+								#3983899 - Auction#205- Under the sea
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983899searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983899searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983899searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983899, "3983899searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983645searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983645"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983645/69342334"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983645searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983645"
+								title="#3983645 - Auction#194- Cash register toy"
+							>
+								#3983645 - Auction#194- Cash register toy
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983645searchGrid">
+										$5.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983645searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983645searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983645, "3983645searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983585searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983585"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983585/69340988"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983585searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983585"
+								title="#3983585 - Auction#188- Toddler chairs"
+							>
+								#3983585 - Auction#188- Toddler chairs
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983585searchGrid">
+										$5.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983585searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983585searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983585, "3983585searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983520searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983520"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983520/69339871"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983520searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983520"
+								title="#3983520 - Auction#184- Fish canvas"
+							>
+								#3983520 - Auction#184- Fish canvas
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983520searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983520searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983520searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983520, "3983520searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983590searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983590"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983590/69341107"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983590searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983590"
+								title="#3983590 - Auction#189- Dogs canvas"
+							>
+								#3983590 - Auction#189- Dogs canvas
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983590searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983590searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983590searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983590, "3983590searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983652searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983652"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983652/69342515"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983652searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983652"
+								title="#3983652 - Auction#195- Monkey canvas"
+							>
+								#3983652 - Auction#195- Monkey canvas
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983652searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983652searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983652searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983652, "3983652searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983598searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983598"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983598/69341211"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983598searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983598"
+								title="#3983598 - Auction#190- Bears canvas"
+							>
+								#3983598 - Auction#190- Bears canvas
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983598searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983598searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983598searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983598, "3983598searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983858searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983858"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983858/69346878"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983858searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983858"
+								title="#3983858 - Auction#200- Arm chair"
+							>
+								#3983858 - Auction#200- Arm chair
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983858searchGrid">
+										$15.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983858searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983858searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983858, "3983858searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983863searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983863"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983863/69347171"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983863searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983863"
+								title="#3983863 - Auction#201- Basket"
+							>
+								#3983863 - Auction#201- Basket
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983863searchGrid">
+										$4.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983863searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983863searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983863, "3983863searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3983806searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3983806"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983806/69345830"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							TX
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3983806searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3983806"
+								title="#3983806 - Auction#196- Cleaning toys "
+							>
+								#3983806 - Auction#196- Cleaning toys
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3983806searchGrid">
+										$5.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3983806searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3983806searchGrid" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983806, "3983806searchGrid",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+
+
+				<div class="auction-item" id="3980200searchGrid">
+					<div class="auction-item-img">
+						<a
+								href="/sms/auction/view?auc=3980200"
+						>
+								<div class="position-relative lazy-loading-container lazy-loading-container-loader">
+									<img
+										class="lazy-img-loading"
+										loading="lazy"
+										src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3980200/69269101"
+										alt="View Images"
+									/>
+<div class="loading-spinner lazy-loading-icon" style="" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>								</div>
+						</a>
+						<span class="auction-item-state">
+							CA
+						</span>
+					</div>
+					<div class="auction-item-body px-0">
+						<div id="ai_3980200searchGrid" class="hidden">
+							<div class="d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+							</div>
+						</div>
+
+						<h6 class="w-100 card-title ps-card-feat__body--title ps-1 mb-2">
+							<a
+									href="/sms/auction/view?auc=3980200"
+								title="#3980200 - New Holland 5450 Tractor"
+							>
+								#3980200 - New Holland 5450 Tractor
+							</a>
+						</h6>
+
+						<div class="w-100 ps-card__body--children px-1">
+								Price:
+								<b id="val_3980200searchGrid">
+										$3,750.00
+								</b>
+								<br/>
+
+								<div class="fw-bold">
+	<div id="timeLeft3980200searchGrid" class="d-inline w-100 auction-time_left">
+			<label class="text-nowrap w-auto align-self-center fw-normal">
+				Time Left:
+			</label>
+			<span id="timeLeftValue3980200searchGrid" class="fw-bold text-danger">
+					38 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3980200, "3980200searchGrid",
+				1776028895760, 1776031200000, 0, "",
+				"", "searchList" , timeLeftCallback);
+		</script>
+								</div>
+						</div>
+
+						<div id="buttons" class="d-flex w-100 justify-content-end align-items-center mt-auto">
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+				</div>
+
+				<div id="auctionListView" class="w-100" style="display: none">
+					<table class="ps-table table table-responsive-md">
+						<thead>
+						<tr>
+							<th scope="col">
+	<div role="button" class="sort-by-table" onclick="sort('id', 'N');">
+<i aria-hidden="true" class="bi bi-caret-right-fill " style="color: var(--ps-color-gray-plus); font-size: 0.9rem; "></i>		Auction
+	</div>
+								</th>
+							<th scope="col">
+	<div role="button" class="sort-by-table" onclick="sort('title', 'N');">
+<i aria-hidden="true" class="bi bi-caret-right-fill " style="color: var(--ps-color-gray-plus); font-size: 0.9rem; "></i>		Title
+	</div>
+	 							</th>
+							<th scope="col">&nbsp;</th>
+							<th scope="col">&nbsp;</th>
+							<th nowrap scope="col">
+	<div role="button" class="sort-by-table" onclick="sort('timeLeft', 'N');">
+<i aria-hidden="true" class="bi bi-caret-right-fill " style="color: var(--ps-color-gray-plus); font-size: 0.9rem; "></i>		Time Left
+	</div>
+								</th>
+							<th scope="col">
+	<div role="button" class="sort-by-table" onclick="sort('price', 'N');">
+<i aria-hidden="true" class="bi bi-caret-right-fill " style="color: var(--ps-color-gray-plus); font-size: 0.9rem; "></i>		Current Price
+	</div>
+								</th>
+						</tr>
+						</thead>
+						<tbody>
+								<tr id="3975929searchList">
+									<td>3975929</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3975929">KQI3 Pro Scooter (107351) </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3975929"
+        rel="-ajax-lightbox-3975929"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3975929/69170753"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										CA
+									</td>
+									<td nowrap>
+	<div id="timeLeft3975929searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3975929searchList" class="fw-bold text-danger">
+					2 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3975929, "3975929searchList",
+				1776028895760, 1776029038277, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3975929searchList">
+											$132.50
+									</td>
+								</tr>
+								<tr id="3983908searchList">
+									<td>3983908</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983908">Auction#206- Country server</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983908"
+        rel="-ajax-lightbox-3983908"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983908/69348133"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983908searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983908searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983908, "3983908searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983908searchList">
+											$92.50
+									</td>
+								</tr>
+								<tr id="3983548searchList">
+									<td>3983548</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983548">Auction#185- Storage bench</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983548"
+        rel="-ajax-lightbox-3983548"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983548/69340364"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983548searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983548searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983548, "3983548searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983548searchList">
+											$36.00
+									</td>
+								</tr>
+								<tr id="3983831searchList">
+									<td>3983831</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983831">Auction#197- Country server</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983831"
+        rel="-ajax-lightbox-3983831"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983831/69345996"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983831searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983831searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983831, "3983831searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983831searchList">
+											$110.50
+									</td>
+								</tr>
+								<tr id="3983642searchList">
+									<td>3983642</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983642">Auction#193- Set of toy cars/comand center</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983642"
+        rel="-ajax-lightbox-3983642"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983642/69342113"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983642searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983642searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983642, "3983642searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983642searchList">
+											$8.00
+									</td>
+								</tr>
+								<tr id="3983631searchList">
+									<td>3983631</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983631">Auction#192- Cube oranizer </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983631"
+        rel="-ajax-lightbox-3983631"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983631/69341691"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983631searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983631searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983631, "3983631searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983631searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3975932searchList">
+									<td>3975932</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3975932">K2 Bike (107352) </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3975932"
+        rel="-ajax-lightbox-3975932"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3975932/69170790"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										CA
+									</td>
+									<td nowrap>
+	<div id="timeLeft3975932searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3975932searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3975932, "3975932searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3975932searchList">
+											$10.00
+									</td>
+								</tr>
+								<tr id="3983511searchList">
+									<td>3983511</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983511">Auction#183- Mini Freezer</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983511"
+        rel="-ajax-lightbox-3983511"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983511/69339633"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983511searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983511searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983511, "3983511searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983511searchList">
+											$47.00
+									</td>
+								</tr>
+								<tr id="3983838searchList">
+									<td>3983838</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983838">Auction#199- Clock</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983838"
+        rel="-ajax-lightbox-3983838"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983838/69103172"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983838searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983838searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983838, "3983838searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983838searchList">
+											$2.00
+									</td>
+								</tr>
+								<tr id="3983877searchList">
+									<td>3983877</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983877">Auction#202- Metal shelving</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983877"
+        rel="-ajax-lightbox-3983877"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983877/69347238"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983877searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983877searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983877, "3983877searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983877searchList">
+											$15.50
+									</td>
+								</tr>
+								<tr id="3983581searchList">
+									<td>3983581</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983581">Auction#187- Train toy</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983581"
+        rel="-ajax-lightbox-3983581"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983581/69340943"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983581searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983581searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983581, "3983581searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983581searchList">
+											$1.00
+									</td>
+								</tr>
+								<tr id="3983881searchList">
+									<td>3983881</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983881">Auction#203- Arm chair</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983881"
+        rel="-ajax-lightbox-3983881"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983881/69347628"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983881searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983881searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983881, "3983881searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983881searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983890searchList">
+									<td>3983890</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983890">Auction#204- Arm chair</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983890"
+        rel="-ajax-lightbox-3983890"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983890/69347694"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983890searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983890searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983890, "3983890searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983890searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983575searchList">
+									<td>3983575</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983575">Auction#186- Giraffe canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983575"
+        rel="-ajax-lightbox-3983575"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983575/69340397"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983575searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983575searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983575, "3983575searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983575searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983899searchList">
+									<td>3983899</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983899">Auction#205- Under the sea canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983899"
+        rel="-ajax-lightbox-3983899"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983899/69347817"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983899searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983899searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983899, "3983899searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983899searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983645searchList">
+									<td>3983645</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983645">Auction#194- Cash register toy</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983645"
+        rel="-ajax-lightbox-3983645"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983645/69342334"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983645searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983645searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983645, "3983645searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983645searchList">
+											$5.00
+									</td>
+								</tr>
+								<tr id="3983585searchList">
+									<td>3983585</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983585">Auction#188- Toddler chairs</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983585"
+        rel="-ajax-lightbox-3983585"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983585/69340988"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983585searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983585searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983585, "3983585searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983585searchList">
+											$5.00
+									</td>
+								</tr>
+								<tr id="3983520searchList">
+									<td>3983520</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983520">Auction#184- Fish canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983520"
+        rel="-ajax-lightbox-3983520"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983520/69339871"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983520searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983520searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983520, "3983520searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983520searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983590searchList">
+									<td>3983590</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983590">Auction#189- Dogs canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983590"
+        rel="-ajax-lightbox-3983590"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983590/69341107"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983590searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983590searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983590, "3983590searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983590searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983652searchList">
+									<td>3983652</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983652">Auction#195- Monkey canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983652"
+        rel="-ajax-lightbox-3983652"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983652/69342515"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983652searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983652searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983652, "3983652searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983652searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983598searchList">
+									<td>3983598</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983598">Auction#190- Bears canvas</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983598"
+        rel="-ajax-lightbox-3983598"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983598/69341211"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983598searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983598searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983598, "3983598searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983598searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983858searchList">
+									<td>3983858</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983858">Auction#200- Arm chair</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983858"
+        rel="-ajax-lightbox-3983858"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983858/69346878"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983858searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983858searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983858, "3983858searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983858searchList">
+											$15.00
+									</td>
+								</tr>
+								<tr id="3983863searchList">
+									<td>3983863</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983863">Auction#201- Basket</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983863"
+        rel="-ajax-lightbox-3983863"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983863/69347171"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983863searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983863searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983863, "3983863searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983863searchList">
+											$4.00
+									</td>
+								</tr>
+								<tr id="3983806searchList">
+									<td>3983806</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3983806">Auction#196- Cleaning toys </a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3983806"
+        rel="-ajax-lightbox-3983806"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3983806/69345830"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										TX
+									</td>
+									<td nowrap>
+	<div id="timeLeft3983806searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3983806searchList" class="fw-bold text-danger">
+					8 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3983806, "3983806searchList",
+				1776028895760, 1776029400000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3983806searchList">
+											$5.00
+									</td>
+								</tr>
+								<tr id="3980200searchList">
+									<td>3980200</td>
+									<td class="text-start">
+										<a href="/sms/auction/view?auc=3980200">New Holland 5450 Tractor</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									</td>
+									<td class="text-center">
+        <div class="auction-thumbnail">
+    <a href="/sms/auction/ajaxpicloader?auctionId=3980200"
+        rel="-ajax-lightbox-3980200"
+        onClick="alert('Please wait for the page to complete loading and try again.'); event.preventDefault();"
+    >
+                <div class="position-relative auction-thumbnail-lazy-container lazy-loading-container-loader">
+                   <img
+                       class="lazy-img-loading lazy-img-loading--table"
+                       loading="lazy"
+                       src="https://d37qv0n5b4mbzm.cloudfront.net/sms/docviewer/cdnmainaucdoc/thumb-b/3980200/69269101"
+                       title=""
+                       alt="View Images"
+                    />
+<div class="loading-spinner lazy-loading-icon" style="top: 30%; right: 30%;" role="status" aria-hidden="true">
+<div class="load-spinner__roller">
+<div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div><div><div></div></div>
+</div>
+</div>                </div>
+    </a>
+        </div>
+
+									</td>
+									<td class="text-center text-success fw-bold">
+										CA
+									</td>
+									<td nowrap>
+	<div id="timeLeft3980200searchList" class="d-inline w-100 auction-time_left">
+			<span id="timeLeftValue3980200searchList" class="fw-bold text-danger">
+					38 mins
+			</span>
+	</div>
+
+		<script>
+			updateTimeLeftSpan(timeLeftInfoMap, 3980200, "3980200searchList",
+				1776028895760, 1776031200000, 0, "",
+				"", "searchGrid" , timeLeftCallback);
+		</script>
+									</td>
+									<td class="text-end pe-4" id="val_3980200searchList">
+											$3,750.00
+									</td>
+								</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div class="w-100 mb-2">
+					<div id="hideShowImages" style="display: none">
+	<div class="d-flex justify-content-end me-2">
+		[
+			<span class="a me-2" role="button" onclick="listimg('n');">
+				Hide Images
+			</span>
+			|
+			<span class="a disabled ms-2">
+				Show Images
+			</span>
+		]
+	</div>
+</div>
+	<div class="ajax-loading-pagination">
+			<div class="d-flex justify-content-center align-items-center mt-2">
+					<span class="fw-bold a disabled me-2">
+						<span class="small">&laquo;</span>
+					</span>
+					<span class="fw-bold a disabled me-2">
+					   <span class="small me-1">&#139;</span>Prev
+					</span>
+					<strong class="me-2">
+						1
+					</strong>
+								<span class="me-2" role="button" onclick="srchPage('1');">
+						2
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('2');">
+						3
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('3');">
+						4
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('4');">
+						5
+					</span>
+								<span class="me-2" role="button" onclick="srchPage('5');">
+						6
+					</span>
+			&nbsp;
+				<span class="fw-bold me-2" role="button" onclick="srchPage('1');">
+					 Next<span class="small ms-1">&#155;</span>
+				</span>
+				<span class="fw-bold me-2" role="button" onclick="srchPage('215');">
+					<span class="small">&raquo;</span>
+				</span>
+		  </div>
+	</div>
+
+				</div>
+			<div class="text-center w-100 my-4 d-none" id="noAuctionsFound">
+				No auctions found
+			</div>
+		</div>
+
+                </main>
+
+                    <footer>
+                        <div style="clear:left;">
+    <div class="d-none d-md-flex ps-border-top-gross d-print-none"></div>
+
+    <div class="d-none d-md-flex ps-main-bar d-print-none">
+        <div class="left-sidebar"></div>
+        <div class="right-sidebar"></div>
+    </div>
+
+    <div class="ps-footer-line-slim d-md-none d-print-none"></div>
+
+    <div class="d-flex justify-content-center flex-wrap ps-footer-info mt-3 d-print-none">
+        Customer Support:&nbsp            <a href="mailto:support@publicsurplus.com">support@publicsurplus.com</a>
+         |
+
+        Copyright 1999-2026 The Public Group, LLC.
+            |
+        All rights reserved. 
+    </div>
+
+    <div class="d-flex justify-content-center pt-2">
+        <img src="/sms/20240825/images/logoGroup_footer.png"
+                                          alt="The Public Group"/>
+    </div>
+</div>
+                    </footer>
+            </div>
+
+<div style='width:100%; display: none;' id="cookiesAcceptedDiv">
+    <div class="message-container">
+        <h2>
+            This website uses cookies to ensure you get the best experience on our website. Please accept cookies for optimal performance.
+        </h2>
+    </div>
+    <div class="container-button">
+        <button type="button" class="ps-button" color="light" onclick="acceptCookies();">
+            Yes, I Accept Cookies
+        </button>
+        <button
+                class="ps-button mx-4" color="link"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#iframeModal"
+                onclick="iframeModalBootstrap('iframeModal', '/sms/help/public/privacy.html');"
+        >
+            [
+            Public Surplus Privacy Policy
+            ]
+        </button>
+        <button
+                class="ps-button" color="link"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#iframeModal"
+                onclick="iframeModalBootstrap('iframeModal', '/sms/help/public/info_cookies.ftlh');"
+        >
+            [
+            How to manage the cookies
+            ]
+        </button>
+    </div>
+</div>
+
+        </body>
+
+        <script type="text/javascript">
+            function hideIconTooltip(icon){
+		var tooltip = bootstrap.Tooltip.getInstance(icon);
+		if(tooltip) {
+			tooltip.hide();
+		}
+	}
+
+	function disposeIconTooltip(icon){
+		var tooltip = bootstrap.Tooltip.getInstance(icon);
+		if(tooltip) {
+			tooltip.dispose();
+		}
+	}
+
+	function reactivateTooltipAfterIconChange(icon) {
+		var parent = icon.parentElement;
+		if (parent && parent.tagName === 'BUTTON') {
+			//if the tooltip is visible, the tooltip is hidden before changing the current icon
+			parent.addEventListener("click", (event) => hideIconTooltip(icon));
+			//after call ajax function, detects if there is a change in the button icon and reactivates the tooltip on the new icon
+			var observer = new MutationObserver(function(mutationsList, observer) {
+				mutationsList.forEach(mutation => {
+					if (mutation.type === 'childList') {
+						var newIcon = parent.querySelector('[data-bs-custom-class*="icon-tooltip"]');
+						bootstrap.Tooltip.getOrCreateInstance(newIcon);
+						parent.addEventListener("click", (event) => hideIconTooltip(newIcon));
+					}
+				});
+			});
+			var config = { childList: true };
+			observer.observe(parent, config);
+		} else if (parent) {
+			icon.addEventListener("click", (event) => hideIconTooltip(icon));
+		}
+	}
+
+	function activateIconTooltips() {
+		document.querySelectorAll('[data-bs-custom-class*="icon-tooltip"]').forEach(icon => {
+			activateIconTooltip(icon);
+		});
+	}
+
+	function activateIconTooltip(icon) {
+		bootstrap.Tooltip.getOrCreateInstance(icon);
+		reactivateTooltipAfterIconChange(icon);
+	}
+
+	if (document.addEventListener) {
+		document.addEventListener("DOMContentLoaded", (event) => {
+			activateIconTooltips();
+		});
+	}
+        </script>
+    </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

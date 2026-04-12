@@ -1,0 +1,30 @@
+INVESTIGAÇÃO PROFUNDA - RESULTADOS
+
+1. GOVDEALS:
+   - Site é SPA (Single Page Application) - conteúdo renderizado via JavaScript
+   - requests retorna 102612 chars mas ZERO resultados no HTML (tudo renderizado client-side)
+   - Nenhuma API JSON pública encontrada
+   - SOLUÇÃO: Precisa usar API interna ou aceitar que não funciona com requests simples
+   
+2. BIDSPOTTER:
+   - URL de busca redireciona para PÁGINA DE ERRO: /en-us/error?aspxerrorpath=/en-us/search
+   - Busca não funciona mais nessa URL
+   - SOLUÇÃO: Precisa encontrar nova URL de busca ou API
+
+3. PUBLIC SURPLUS:
+   - FUNCIONA! Retorna 25 resultados
+   - MAS: resultados são irrelevantes para "golf cart" (scooters, canvas, chairs, etc.)
+   - O site retorna resultados genéricos, não filtrados pelo termo
+   - SOLUÇÃO: O filtro de relevância deve eliminar esses itens irrelevantes
+
+4. JJ KANE:
+   - /search e /inventory retornam 404
+   - WordPress search /?s=golf+cart retorna 200 mas 0 artigos/resultados
+   - Site tem /auctions/ com 45 links de locais de leilão
+   - Site tem /equipment/ com formulário de busca (Gravity Forms)
+   - SOLUÇÃO: Precisa usar /equipment/ com formulário ou /auctions/ para listar leilões
+
+5. AVGEAR:
+   - FUNCIONA! Detecta leilão ativo com 4 links Joseph Finn
+   - Mas busca por "golf cart" retorna 0 (esperado - AVGear é de equipamento AV)
+   - SOLUÇÃO: Funciona corretamente, só não tem golf carts
