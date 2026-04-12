@@ -1618,16 +1618,8 @@ function renderCategoryData(data, detailsElem) {{
         }}
     }}
     
-    /* Header com resumo */
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px">';
-    html += '<div style="color:#f0f6fc;font-weight:600;font-size:13px">Produtos Encontrados</div>';
-    html += '<div style="display:flex;gap:10px;font-size:12px">';
-    html += '<span style="color:#8b949e">' + data.terms.length + ' termos</span>';
-    html += '<span style="color:#3fb950;font-weight:600">' + totalItems + ' produto' + (totalItems !== 1 ? 's' : '') + '</span>';
-    html += '</div></div>';
-    
     if (totalItems > 0) {{
-        /* Tabela de produtos encontrados */
+        /* Mostrar tabela de produtos encontrados */
         html += '<table class="items-table"><thead><tr>';
         html += '<th>Produto</th><th>Termo</th><th>Plataforma</th><th>Preco</th><th>Acao</th>';
         html += '</tr></thead><tbody>';
@@ -1652,11 +1644,8 @@ function renderCategoryData(data, detailsElem) {{
         
         html += '</tbody></table>';
     }} else {{
-        html += '<div class="no-items-box">';
-        html += '<div style="font-size:28px;margin-bottom:10px">&#128269;</div>';
-        html += '<div style="color:#8b949e;font-size:13px">Nenhum produto encontrado ainda nesta categoria</div>';
-        html += '<div style="color:#484f58;font-size:11px;margin-top:5px">O agente esta buscando automaticamente a cada hora</div>';
-        html += '</div>';
+        /* Quando nao ha produtos, mostrar apenas texto discreto */
+        html += '<div style="color:#8b949e;font-size:12px;padding:10px 0">Aguardando resultados...</div>';
     }}
     
     detailsElem.innerHTML = html;
