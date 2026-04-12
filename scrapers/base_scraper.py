@@ -30,7 +30,7 @@ class BaseScraper:
     def fetch_page(self, url, params=None, verify=True):
         """Faz a requisição HTTP e retorna o objeto BeautifulSoup."""
         try:
-            response = self.session.get(url, params=params, timeout=20, verify=verify)
+            response = self.session.get(url, params=params, timeout=10, verify=verify)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             # Libera o texto bruto da resposta para economizar memória
@@ -44,7 +44,7 @@ class BaseScraper:
     def fetch_json(self, url, params=None, verify=True):
         """Faz a requisição HTTP e retorna o JSON da resposta."""
         try:
-            response = self.session.get(url, params=params, timeout=20, verify=verify)
+            response = self.session.get(url, params=params, timeout=10, verify=verify)
             response.raise_for_status()
             data = response.json()
             del response

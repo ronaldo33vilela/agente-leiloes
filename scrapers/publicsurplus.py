@@ -39,7 +39,7 @@ class PublicSurplusScraper(BaseScraper):
         
         try:
             # Tenta com verificação SSL desabilitada (site tem problemas de certificado)
-            response = self.session.get(search_url, params=params, timeout=20, verify=False)
+            response = self.session.get(search_url, params=params, timeout=10, verify=False)
             response.raise_for_status()
         except Exception as e:
             logger.error(f"Erro ao acessar {self.site_name}: {e}")

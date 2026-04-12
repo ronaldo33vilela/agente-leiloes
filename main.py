@@ -439,6 +439,27 @@ def api_watchlist_prices(item_id):
 # TELEGRAM WEBHOOK
 # ==========================================
 
+def _format_price(raw_price):
+    """Formata preco de forma segura (pode ser string, float, int ou None)."""
+    if raw_price is None or raw_price == '' or raw_price == 0:
+        return "Consultar"
+    if isinstance(raw_price, (int, float)):
+        return f"${raw_price:,.2f}" if raw_price > 0 else "Consultar"
+    # String: tenta extrair numero
+    s = str(raw_price).strip()
+    if s.startswith('$'):
+        return s  # ja formatado
+    try:
+        import re as _re
+        match = _re.search(r'[\d,]+\.?\d*', s)
+        if match:
+            num = float(match.group(0).replace(',', ''))
+            return f"${num:,.2f}"
+    except (ValueError, AttributeError):
+        pass
+    return s if s and s != '0' else "Consultar"
+
+
 def send_telegram_message(chat_id, text, parse_mode="HTML"):
     """Envia mensagem via API do Telegram."""
     if not TELEGRAM_TOKEN:
@@ -724,40 +745,51 @@ def webhook():
                     except Exception as e:
                         response_text = f"Erro: {e}"
             
-            # /buscar TERMO
+            # /buscar TERMO — executa em thread separada para nao travar webhook
             elif cmd == "/buscar":
                 if not args:
                     response_text = "Uso: /buscar TERMO\nExemplo: /buscar golf cart"
                 else:
                     search_term = " ".join(args)
-                    # Envia mensagem de "buscando..."
-                    send_telegram_message(chat_id, "<b>Buscando...</b> \U0001f50d")
-                    
-                    # Executa a busca
-                    results, error = agent.bot.handle_search_command(search_term)
-                    
-                    if error:
-                        response_text = error
-                    elif results:
-                        # Formata resultados
-                        lines = [f"<b>Resultados para: {search_term}</b> ({len(results)} encontrados)\n"]
-                        for i, item in enumerate(results, 1):
-                            title = item.get('title', 'N/A')[:50]
-                            site = item.get('site', 'N/A')
-                            price = item.get('price', 0) or 0
-                            link = item.get('link', '#')
-                            score = item.get('_relevance_score', 0)
-                            
-                            lines.append(
-                                f"\n<b>{i}.</b> {title}\n"
-                                f"<b>Site:</b> {site} | "
-                                f"<b>Preco:</b> ${price:,.0f}\n"
-                                f"<b>Relevancia:</b> {score:.0%}\n"
-                                f'<a href="{link}">Ver Leilao</a>'
-                            )
-                        response_text = "".join(lines)
-                    else:
-                        response_text = f"Nenhum resultado encontrado para: <b>{search_term}</b>"
+                    # Envia "buscando" e retorna 200 imediatamente ao Telegram
+                    send_telegram_message(chat_id, f"Buscando <b>{search_term}</b>... (ate 30s)")
+
+                    def _run_buscar(cid, term):
+                        try:
+                            results, error = agent.bot.handle_search_command(term)
+                            if error:
+                                send_telegram_message(cid, error)
+                            elif results:
+                                lines = [f"<b>Resultados para: {term}</b> ({len(results)} encontrados)\n"]
+                                for i, item in enumerate(results, 1):
+                                    title = item.get('title', 'N/A')[:50]
+                                    site = item.get('site', 'N/A')
+                                    raw_price = item.get('price', 'N/A')
+                                    price_str = _format_price(raw_price)
+                                    link = item.get('link', '#')
+                                    score = item.get('_relevance_score', 0)
+                                    try:
+                                        score_pct = f"{float(score):.0%}"
+                                    except (ValueError, TypeError):
+                                        score_pct = "N/A"
+                                    lines.append(
+                                        f"\n<b>{i}.</b> {title}\n"
+                                        f"<b>Site:</b> {site}\n"
+                                        f"<b>Preco:</b> {price_str}\n"
+                                        f"<b>Relevancia:</b> {score_pct}\n"
+                                        f'<a href="{link}">Ver Leilao</a>'
+                                    )
+                                send_telegram_message(cid, "".join(lines))
+                            else:
+                                send_telegram_message(cid, f"Nenhum resultado encontrado para: <b>{term}</b>")
+                        except Exception as e:
+                            logger.error(f"/buscar thread erro: {e}")
+                            send_telegram_message(cid, f"Erro na busca: {e}")
+
+                    t = threading.Thread(target=_run_buscar, args=(chat_id, search_term), daemon=True)
+                    t.start()
+                    # NAO seta response_text — resposta ja foi enviada e thread cuida do resto
+                    response_text = None
             
 
             # /dashboard

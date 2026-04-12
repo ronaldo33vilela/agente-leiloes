@@ -80,7 +80,7 @@ class JJKaneScraper(BaseScraper):
             logger.info(f"Encontrados {len(catalog_links)} catálogos Proxibid")
             
             # Acessar cada catálogo e buscar itens com a keyword
-            for catalog_url, catalog_name in catalog_links[:6]:  # Limitar a 6 catálogos
+            for catalog_url, catalog_name in catalog_links[:3]:  # Limitar a 3 catalogos (velocidade)
                 try:
                     catalog_results = self._search_proxibid_catalog(catalog_url, keyword)
                     results.extend(catalog_results)

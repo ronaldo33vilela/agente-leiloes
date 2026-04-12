@@ -68,7 +68,7 @@ class GovDealsScraper(BaseScraper):
             }
             
             try:
-                response = self.session.get(api_url, params=params, timeout=15, headers=headers)
+                response = self.session.get(api_url, params=params, timeout=8, headers=headers)
                 if response.status_code == 200:
                     ct = response.headers.get('content-type', '')
                     if 'json' in ct:
@@ -85,7 +85,7 @@ class GovDealsScraper(BaseScraper):
                     "pageSize": 25,
                     "sort": "closing_soon"
                 }
-                response = self.session.post(api_url, json=payload, timeout=15, headers=headers)
+                response = self.session.post(api_url, json=payload, timeout=8, headers=headers)
                 if response.status_code == 200:
                     ct = response.headers.get('content-type', '')
                     if 'json' in ct:

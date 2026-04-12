@@ -4,7 +4,9 @@ import logging
 import sys
 import os
 import re
+import gc
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
@@ -627,16 +629,38 @@ class AuctionTelegramBot:
             return None, 0
 
     # ==========================================
-    # COMANDO /buscar
+    # COMANDO /buscar (com timeout e resultados parciais)
     # ==========================================
+    SCRAPER_TIMEOUT = 12  # segundos max por plataforma
+
+    def _search_single_platform(self, scraper_class, site_name, search_term):
+        """Executa busca em UMA plataforma com tratamento de erro."""
+        scraper = None
+        try:
+            scraper = scraper_class()
+            results = scraper.search(search_term)
+            return results or []
+        except Exception as e:
+            logger.warning(f"Erro ao buscar em {site_name}: {e}")
+            return []
+        finally:
+            if scraper:
+                try:
+                    scraper.session.close()
+                except Exception:
+                    pass
+                del scraper
+                gc.collect()
+
     def handle_search_command(self, search_term):
         """
-        Busca um termo em TODAS as 5 plataformas e retorna resultados.
-        Retorna lista de dicts com: title, site, link, price, relevance_score
+        Busca um termo em TODAS as 5 plataformas COM TIMEOUT.
+        Usa ThreadPoolExecutor para limitar tempo por plataforma.
+        Retorna resultados parciais se alguma plataforma travar.
         """
         if not search_term or len(search_term.strip()) == 0:
             return None, "Uso: /buscar TERMO\nExemplo: /buscar golf cart"
-        
+
         try:
             from scrapers.govdeals import GovDealsScraper
             from scrapers.bidspotter import BidSpotterScraper
@@ -644,48 +668,74 @@ class AuctionTelegramBot:
             from scrapers.jjkane import JJKaneScraper
             from scrapers.avgear import AVGearScraper
             from scrapers.relevance_filter import filter_items
-            
-            all_results = []
-            
-            # Busca em cada plataforma
-            scrapers = [
-                (GovDealsScraper(), 'GovDeals'),
-                (BidSpotterScraper(), 'BidSpotter'),
-                (PublicSurplusScraper(), 'Public Surplus'),
-                (JJKaneScraper(), 'JJ Kane'),
-                (AVGearScraper(), 'AVGear'),
+
+            platforms = [
+                (BidSpotterScraper, 'BidSpotter'),
+                (PublicSurplusScraper, 'Public Surplus'),
+                (GovDealsScraper, 'GovDeals'),
+                (JJKaneScraper, 'JJ Kane'),
+                (AVGearScraper, 'AVGear'),
             ]
-            
-            logger.info(f"Iniciando busca por: {search_term}")
-            
-            for scraper, site_name in scrapers:
-                try:
-                    logger.debug(f"Buscando em {site_name}...")
-                    results = scraper.search(search_term)
-                    if results:
-                        all_results.extend(results)
-                        logger.debug(f"{site_name}: {len(results)} resultados encontrados")
-                except Exception as e:
-                    logger.warning(f"Erro ao buscar em {site_name}: {e}")
-                    continue
-            
+
+            all_results = []
+            succeeded = []
+            failed = []
+
+            logger.info(f"/buscar: Iniciando busca por '{search_term}' em {len(platforms)} plataformas (timeout={self.SCRAPER_TIMEOUT}s cada)")
+
+            # Executa cada scraper com timeout individual
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = {}
+                for scraper_class, site_name in platforms:
+                    future = executor.submit(
+                        self._search_single_platform,
+                        scraper_class, site_name, search_term
+                    )
+                    futures[future] = site_name
+
+                for future in futures:
+                    site_name = futures[future]
+                    try:
+                        results = future.result(timeout=self.SCRAPER_TIMEOUT)
+                        if results:
+                            all_results.extend(results)
+                            succeeded.append(f"{site_name}({len(results)})")
+                            logger.info(f"/buscar: {site_name} retornou {len(results)} itens")
+                        else:
+                            succeeded.append(f"{site_name}(0)")
+                    except FuturesTimeoutError:
+                        failed.append(site_name)
+                        logger.warning(f"/buscar: {site_name} TIMEOUT ({self.SCRAPER_TIMEOUT}s) - ignorado")
+                        future.cancel()
+                    except Exception as e:
+                        failed.append(site_name)
+                        logger.warning(f"/buscar: {site_name} ERRO: {e}")
+
+            logger.info(f"/buscar: OK=[{', '.join(succeeded)}] FALHA=[{', '.join(failed) or 'nenhuma'}] Total bruto={len(all_results)}")
+
             if not all_results:
-                return None, f"Nenhum resultado encontrado para: <b>{search_term}</b>"
-            
-            # Aplica filtro de relevância novamente para garantir qualidade
+                msg = f"Nenhum resultado encontrado para: <b>{search_term}</b>"
+                if failed:
+                    msg += f"\n(Plataformas com timeout: {', '.join(failed)})"
+                return None, msg
+
+            # Aplica filtro de relevancia
             filtered = filter_items(all_results, search_term, min_score=0.5)
-            
+
             if not filtered:
-                return None, f"Nenhum resultado relevante encontrado para: <b>{search_term}</b>"
-            
-            # Limita a 10 resultados para nao estourar tamanho de mensagem
+                msg = f"Nenhum resultado relevante encontrado para: <b>{search_term}</b>"
+                if failed:
+                    msg += f"\n(Plataformas com timeout: {', '.join(failed)})"
+                return None, msg
+
+            # Limita a 10 resultados
             filtered = filtered[:10]
-            
-            logger.info(f"Busca concluida: {len(filtered)} resultados relevantes")
+
+            logger.info(f"/buscar: {len(filtered)} resultados relevantes apos filtro")
             return filtered, None
-            
+
         except Exception as e:
-            logger.error(f"Erro ao executar busca: {e}")
+            logger.error(f"/buscar: Erro geral: {e}")
             return None, f"Erro ao executar busca: {str(e)}"
 
     # ==========================================
