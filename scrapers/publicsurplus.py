@@ -1,4 +1,5 @@
 from .base_scraper import BaseScraper, logger
+from .auction_utils import should_include_item
 import re
 import urllib3
 
@@ -10,6 +11,7 @@ class PublicSurplusScraper(BaseScraper):
     Scraper para o site Public Surplus.
     Usa requests + BeautifulSoup (sem Selenium).
     O site pode ter problemas de SSL, então usamos verify=False.
+    Filtra apenas leilões ATIVOS (ignora closed/ended/sold).
     """
     
     def __init__(self):
@@ -21,7 +23,7 @@ class PublicSurplusScraper(BaseScraper):
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
         results = self._search_requests(keyword)
-        logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
+        logger.info(f"Encontrados {len(results)} itens ATIVOS no {self.site_name} para '{keyword}'")
         return results
         
     def _search_requests(self, keyword):
@@ -73,6 +75,13 @@ class PublicSurplusScraper(BaseScraper):
                 
                 if item_id in processed_ids:
                     continue
+                
+                # Filtra apenas leilões ativos
+                element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                if not should_include_item(element_context, text):
+                    logger.debug(f"Item descartado (leilão finalizado): {text}")
+                    continue
+                
                 processed_ids.add(item_id)
                 
                 # Título
