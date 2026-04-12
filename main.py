@@ -30,8 +30,14 @@ from scrapers.bidspotter import BidSpotterScraper
 from scrapers.avgear import AVGearScraper
 from scrapers.jjkane import JJKaneScraper
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import requests
+
 app = Flask(__name__)
+
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+WEBHOOK_URL = os.environ.get('WEBHOOK_URL', 'https://agente-leiloes.onrender.com/webhook')
 
 # ==========================================
 # REGISTRO DE LOGS EM MEMORIA (para o dashboard)
@@ -418,6 +424,258 @@ def api_watchlist_prices(item_id):
         return jsonify({"status": "ok", "item": item, "price_updates": updates})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ==========================================
+# TELEGRAM WEBHOOK
+# ==========================================
+
+def send_telegram_message(chat_id, text, parse_mode="HTML"):
+    """Envia mensagem via API do Telegram."""
+    if not TELEGRAM_TOKEN:
+        logger.warning("TELEGRAM_TOKEN nao configurado")
+        return False
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": parse_mode,
+        }
+        resp = requests.post(url, json=payload, timeout=10)
+        return resp.status_code == 200
+    except Exception as e:
+        logger.error(f"Erro ao enviar mensagem Telegram: {e}")
+        return False
+
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    """Recebe updates do Telegram e processa comandos."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"ok": True}), 200
+        
+        message = data.get("message", {})
+        if not message:
+            return jsonify({"ok": True}), 200
+        
+        chat_id = message.get("chat", {}).get("id")
+        text = message.get("text", "").strip()
+        user_id = message.get("from", {}).get("id")
+        
+        if not chat_id or not text:
+            return jsonify({"ok": True}), 200
+        
+        logger.info(f"Telegram: user_id={user_id}, chat_id={chat_id}, text={text[:50]}")
+        
+        # Processa comando
+        if text.startswith("/"):
+            parts = text.split()
+            cmd = parts[0].lower()
+            args = parts[1:] if len(parts) > 1 else []
+            
+            response_text = None
+            
+            # /start
+            if cmd == "/start":
+                response_text = (
+                    "Bem-vindo ao Agente de Leiloes R33!\n\n"
+                    "Comandos disponiveis:\n"
+                    "/agendar URL TETO - Adiciona leilao a agenda\n"
+                    "/agenda - Lista leiloes monitorados\n"
+                    "/teto ID VALOR - Altera teto\n"
+                    "/cancelar ID - Remove da agenda\n"
+                    "/arquivar ID - Move para arquivo\n"
+                    "/arquivo [cat] - Lista arquivo\n"
+                    "/historico PRODUTO - Historico de precos\n"
+                    "/preco PRODUTO - Preco medio\n"
+                    "/ganhou - Registra arrematacao\n"
+                    "/frete ID | Transp | Rastreio - Registra frete\n"
+                    "/rastrear - Status em transito\n"
+                    "/entregue ID - Marca entregue\n"
+                    "/estoque - Lista estoque\n"
+                    "/vender ID VALOR - Registra venda\n"
+                    "/dashboard - Resumo completo"
+                )
+            
+            # /agenda
+            elif cmd == "/agenda":
+                try:
+                    watchlist = database.get_watchlist_items("watching")
+                    if not watchlist:
+                        response_text = "Nenhum leilao na agenda. Use /agendar URL TETO"
+                    else:
+                        lines = ["<b>Agenda de Leiloes:</b>\n"]
+                        for w in watchlist[:10]:
+                            wid = w.get("id", "?")
+                            title = w.get("title", "N/A")[:40]
+                            price = w.get("current_price", 0) or 0
+                            ceiling = w.get("max_price_ceiling", 0) or 0
+                            lines.append(f"<b>#{wid}</b> {title}\nPreco: ${price:,.0f} | Teto: ${ceiling:,.0f}")
+                        response_text = "\n\n".join(lines)
+                except Exception as e:
+                    response_text = f"Erro ao buscar agenda: {e}"
+            
+            # /agendar URL TETO
+            elif cmd == "/agendar":
+                if len(args) < 2:
+                    response_text = "Uso: /agendar URL TETO\nExemplo: /agendar https://govdeals.com/item/123 3000"
+                else:
+                    url = args[0]
+                    try:
+                        teto = float(args[1])
+                        # Tenta extrair titulo da URL (simplificado)
+                        title = f"Leilao de {url.split('/')[-1]}"
+                        site = url.split("/")[2] if "/" in url else "desconhecido"
+                        
+                        item_id = database.add_to_watchlist(
+                            title=title,
+                            url=url,
+                            site=site,
+                            category="agenda_manual",
+                            current_price=0,
+                            max_price_ceiling=teto,
+                            closing_date=None,
+                        )
+                        response_text = f"Leilao adicionado a agenda!\nID: {item_id}\nTeto: ${teto:,.2f}\n\nUse /agenda para ver todos."
+                    except ValueError:
+                        response_text = "Teto deve ser um numero. Exemplo: /agendar URL 3000"
+            
+            # /teto ID VALOR
+            elif cmd == "/teto":
+                if len(args) < 2:
+                    response_text = "Uso: /teto ID VALOR\nExemplo: /teto 5 2500"
+                else:
+                    try:
+                        item_id = int(args[0])
+                        new_teto = float(args[1])
+                        database.update_watchlist_ceiling(item_id, new_teto)
+                        response_text = f"Teto do item #{item_id} atualizado para ${new_teto:,.2f}"
+                    except (ValueError, Exception) as e:
+                        response_text = f"Erro ao atualizar teto: {e}"
+            
+            # /cancelar ID
+            elif cmd == "/cancelar":
+                if not args:
+                    response_text = "Uso: /cancelar ID"
+                else:
+                    try:
+                        item_id = int(args[0])
+                        database.remove_from_watchlist(item_id)
+                        response_text = f"Leilao #{item_id} removido da agenda."
+                    except Exception as e:
+                        response_text = f"Erro: {e}"
+            
+            # /arquivar ID
+            elif cmd == "/arquivar":
+                if not args:
+                    response_text = "Uso: /arquivar ID"
+                else:
+                    try:
+                        item_id = int(args[0])
+                        database.archive_watchlist_item(item_id)
+                        response_text = f"Leilao #{item_id} movido para arquivo."
+                    except Exception as e:
+                        response_text = f"Erro: {e}"
+            
+            # /arquivo [categoria]
+            elif cmd == "/arquivo":
+                try:
+                    archived = database.get_archived_items(limit=10)
+                    if not archived:
+                        response_text = "Nenhum leilao no arquivo."
+                    else:
+                        lines = ["<b>Arquivo de Leiloes:</b>\n"]
+                        for a in archived[:10]:
+                            aid = a.get("id", "?")
+                            title = a.get("title", "N/A")[:35]
+                            lines.append(f"<b>#{aid}</b> {title}")
+                        response_text = "\n".join(lines)
+                except Exception as e:
+                    response_text = f"Erro: {e}"
+            
+            # /historico PRODUTO
+            elif cmd == "/historico":
+                if not args:
+                    response_text = "Uso: /historico PRODUTO\nExemplo: /historico Allen Heath SQ5"
+                else:
+                    produto = " ".join(args)
+                    try:
+                        history = database.search_price_history(produto, limit=5)
+                        if not history:
+                            response_text = f"Nenhum historico encontrado para '{produto}'."
+                        else:
+                            lines = [f"<b>Historico: {produto}</b>\n"]
+                            for h in history:
+                                price = h.get("final_price", 0) or 0
+                                date = h.get("closing_date", "N/A")[:10]
+                                lines.append(f"${price:,.0f} em {date}")
+                            response_text = "\n".join(lines)
+                    except Exception as e:
+                        response_text = f"Erro: {e}"
+            
+            # /preco PRODUTO
+            elif cmd == "/preco":
+                if not args:
+                    response_text = "Uso: /preco PRODUTO"
+                else:
+                    produto = " ".join(args)
+                    try:
+                        avg = database.get_average_price(produto)
+                        if avg:
+                            response_text = f"Preco medio de <b>{produto}</b>: <b>${avg:,.2f}</b>"
+                        else:
+                            response_text = f"Nenhum dado de preco para '{produto}'."
+                    except Exception as e:
+                        response_text = f"Erro: {e}"
+            
+            # /dashboard
+            elif cmd == "/dashboard":
+                try:
+                    stats = database.get_dashboard_stats()
+                    response_text = (
+                        f"<b>Dashboard Financeiro</b>\n\n"
+                        f"Investido: ${stats.get('total_investido', 0):,.2f}\n"
+                        f"Vendas: ${stats.get('total_vendas', 0):,.2f}\n"
+                        f"Lucro: ${stats.get('lucro_acumulado', 0):,.2f}\n"
+                        f"Em Estoque: {stats.get('em_estoque', 0)} itens\n"
+                        f"Vendidos: {stats.get('vendidos', 0)} itens\n\n"
+                        f"Acesse o dashboard web:\nhttps://agente-leiloes.onrender.com/dashboard"
+                    )
+                except Exception as e:
+                    response_text = f"Erro: {e}"
+            
+            # Comando desconhecido
+            else:
+                response_text = f"Comando desconhecido: {cmd}\nUse /start para ver comandos disponiveis."
+            
+            if response_text:
+                send_telegram_message(chat_id, response_text)
+        
+        return jsonify({"ok": True}), 200
+    
+    except Exception as e:
+        logger.error(f"Erro no webhook: {e}")
+        return jsonify({"ok": True}), 200
+
+
+def setup_webhook():
+    """Configura o webhook do Telegram na inicializacao."""
+    if not TELEGRAM_TOKEN:
+        logger.warning("TELEGRAM_TOKEN nao configurado, webhook nao sera configurado")
+        return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook"
+        payload = {"url": WEBHOOK_URL}
+        resp = requests.post(url, json=payload, timeout=10)
+        if resp.status_code == 200:
+            logger.info(f"Webhook Telegram configurado: {WEBHOOK_URL}")
+        else:
+            logger.warning(f"Erro ao configurar webhook: {resp.text}")
+    except Exception as e:
+        logger.error(f"Erro ao configurar webhook: {e}")
 
 
 # ==========================================
@@ -1145,6 +1403,7 @@ def dashboard():
 def start_agent():
     global agent
     try:
+        setup_webhook()
         agent = AuctionAgent()
         agent.start()
     except Exception as e:
