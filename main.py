@@ -1175,6 +1175,52 @@ a:hover{{text-decoration:underline}}
     .finance-grid{{grid-template-columns:1fr}}
     .term-list{{grid-template-columns:1fr}}
 }}
+
+/* SPINNER LOADING STYLES */
+.loading-overlay {{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}}
+
+.spinner-container {{
+    text-align: center;
+}}
+
+.spinner {{
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(88, 166, 255, 0.2);
+    border-top: 4px solid #58a6ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}}
+
+@keyframes spin {{
+    0% {{ transform: rotate(0deg); }}
+    100% {{ transform: rotate(360deg); }}
+}}
+
+.spinner-container p {{
+    color: #c9d1d9;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    animation: pulse 1.5s ease-in-out infinite;
+}}
+
+@keyframes pulse {{
+    0%, 100% {{ opacity: 1; }}
+    50% {{ opacity: 0.6; }}
+}}
 </style>
 </head>
 <body>
@@ -1198,6 +1244,14 @@ a:hover{{text-decoration:underline}}
 </div>
 
 <div class="container">
+
+    <!-- SPINNER OVERLAY -->
+    <div id="loadingSpinner" class="loading-overlay" style="display:none;">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <p>Fazendo busca, aguarde...</p>
+        </div>
+    </div>
 
     <!-- NAVIGATION TABS -->
     <div class="nav-tabs">
@@ -1565,7 +1619,24 @@ function scanNow(event) {{
     btn.disabled = true;
     btn.textContent = 'Buscando...';
     
+    // Mostrar spinner
+    var spinner = document.getElementById('loadingSpinner');
+    if (spinner) {{
+        spinner.style.display = 'flex';
+    }}
+    
     console.log('Iniciando varredura manual...');
+    
+    // Timeout de 90 segundos para esconder o spinner (caso a busca demore)
+    var timeoutId = setTimeout(function() {{
+        if (spinner) {{
+            spinner.style.display = 'none';
+        }}
+        btn.disabled = false;
+        btn.textContent = 'Varredura Manual';
+        alert('Varredura concluida! Recarregando dashboard...');
+        location.reload();
+    }}, 90000);
     
     fetch('/api/scan-now', {{
         method: 'POST',
@@ -1580,8 +1651,12 @@ function scanNow(event) {{
     }})
     .then(function(data) {{
         console.log('Dados retornados:', data);
+        clearTimeout(timeoutId);
         if (data.status === 'success') {{
-            alert('Varredura manual iniciada! Os resultados aparecerao em breve no dashboard.');
+            // Esconder spinner
+            if (spinner) {{
+                spinner.style.display = 'none';
+            }}
             btn.disabled = false;
             btn.textContent = 'Varredura Manual';
             // Recarrega o dashboard em 5 segundos para mostrar novos resultados
@@ -1589,6 +1664,9 @@ function scanNow(event) {{
                 location.reload();
             }}, 5000);
         }} else {{
+            if (spinner) {{
+                spinner.style.display = 'none';
+            }}
             alert('Erro: ' + data.message);
             btn.disabled = false;
             btn.textContent = 'Varredura Manual';
@@ -1596,6 +1674,10 @@ function scanNow(event) {{
     }})
     .catch(function(error) {{
         console.error('Erro na requisicao:', error);
+        clearTimeout(timeoutId);
+        if (spinner) {{
+            spinner.style.display = 'none';
+        }}
         alert('Erro ao iniciar varredura: ' + error.message);
         btn.disabled = false;
         btn.textContent = 'Varredura Manual';
