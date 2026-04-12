@@ -619,3 +619,37 @@ def get_archived_items(category=None):
     items = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return items
+
+
+# ==========================================
+# FUNÇÕES DE LIMPEZA DE DADOS
+# ==========================================
+def clear_notified_items():
+    """Limpa a tabela de itens notificados."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM notified_items")
+    conn.commit()
+    conn.close()
+    logger.info("Tabela notified_items limpa")
+
+
+def clear_watchlist():
+    """Limpa a tabela de watchlist."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM auction_watchlist")
+    cursor.execute("DELETE FROM price_updates")
+    conn.commit()
+    conn.close()
+    logger.info("Tabelas auction_watchlist e price_updates limpas")
+
+
+def clear_price_history():
+    """Limpa a tabela de histórico de preços."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM price_history")
+    conn.commit()
+    conn.close()
+    logger.info("Tabela price_history limpa")
