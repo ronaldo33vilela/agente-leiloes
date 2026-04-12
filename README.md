@@ -2,27 +2,46 @@
 
 Um sistema completo em Python para monitorar sites de leilao americanos, analisar oportunidades com Inteligencia Artificial e gerenciar todo o ciclo de vida do lote (da arrematacao a revenda) via Telegram.
 
-**Versao 2.0 - Otimizada para Render Free (512MB RAM) - Sem Selenium**
+**Versao 3.0 - Busca por Categorias com Rotacao Inteligente - Otimizada para Render Free (512MB RAM)**
 
 ## Funcionalidades
 
-### 1. Monitoramento Inteligente
+### 1. Monitoramento Inteligente com Categorias
+- **250+ Termos de Busca:** Organizados em 18 categorias (Allen & Heath, Shure Axient, Mesas de Luz, Paineis LED, etc.)
+- **Sistema de Prioridade:** Grupo A (prioridade maxima), Grupo B (otima oportunidade), Grupo C (garimpo)
+- **Rotacao Automatica:** A cada ciclo (1 hora), processa 25 termos e rotaciona para os proximos
 - **Scraping Automatico:** Monitora 5 sites (GovDeals, Public Surplus, BidSpotter, AVGear, JJ Kane)
 - **Leve e Rapido:** Usa apenas `requests` + `BeautifulSoup` (sem Selenium/Chrome)
 - **Analise com IA:** Usa GPT-4.1-mini para identificar o item, estimar valor de mercado e calcular margem de lucro
 - **Alertas no Telegram:** Envia notificacoes apenas para "Otimas" ou "Boas" oportunidades
+- **Filtro de Preco:** Preco maximo configuravel por categoria
 - **Prevencao de Duplicatas:** Banco de dados SQLite garante que voce nao receba o mesmo alerta duas vezes
 
-### 2. Agenda e Lembretes
+### 2. Categorias de Busca
+
+| Prioridade | Categoria | Descricao |
+|------------|-----------|-----------|
+| A | allen_heath_mixers | Mesas SQ, Qu, GLD, dLive, Avantis, M1, M500 |
+| A | shure_axient | Linha Axient Digital completa (AD4D, AD4Q, AXT, ADX) |
+| A | lighting_consoles | grandMA2/3, Avolites, Chamsys, ETC, Hog |
+| A | led_controllers | Novastar, Colorlight, processadores LED |
+| A | combo_* | Combinacoes prontas de alto valor |
+| B | *_accessories | Acessorios, stageboxes, Dante cards, cases |
+| B | led_panels | Paineis P1.9 a P4.8, indoor/outdoor |
+| B | *_smart | Buscas inteligentes por lotes e oportunidades |
+| C | allen_heath_smart | Anuncios mal escritos, untested, as-is |
+| C | opportunity_terms | Termos genericos: surplus, church audio, salvage |
+
+### 3. Agenda e Lembretes
 - **Agendamento:** Registre leiloes de interesse com data, hora e lance minimo
 - **Lembretes Automaticos:** Receba alertas no Telegram 24h, 1h e 15m antes do leilao comecar
 
-### 3. Pos-Arrematacao e Logistica
+### 4. Pos-Arrematacao e Logistica
 - **Registro de Lotes:** Registre itens ganhos com valor pago e localizacao
 - **Gestao de Frete:** Adicione transportadora e codigo de rastreio
 - **Rastreamento:** Acompanhe o status dos itens em transito
 
-### 4. Estoque e Vendas
+### 5. Estoque e Vendas
 - **Controle de Estoque:** Mova itens entregues para o estoque com preco sugerido de revenda
 - **Registro de Vendas:** Marque itens como vendidos e registre o valor final
 - **Dashboard Financeiro:** Acompanhe total investido, total em vendas e lucro acumulado
@@ -46,13 +65,26 @@ Um sistema completo em Python para monitorar sites de leilao americanos, analisa
    - `TELEGRAM_CHAT_ID`: Seu ID do Telegram (obtido no @userinfobot)
    - `OPENAI_API_KEY`: Sua chave da API da OpenAI
 
-4. **Configure as palavras-chave:**
-   Edite a lista `KEYWORDS` no arquivo `config.py` com os termos que deseja buscar.
+4. **Personalize os termos de busca (opcional):**
+   Edite o dicionario `SEARCH_TERMS` no arquivo `config.py` para adicionar ou remover termos.
+   Ajuste `MAX_PRICE` para definir limites de preco por categoria.
 
 5. **Execute o agente:**
    ```bash
    python main.py
    ```
+
+## Variaveis de Ambiente
+
+| Variavel | Padrao | Descricao |
+|----------|--------|-----------|
+| `TELEGRAM_TOKEN` | - | Token do bot Telegram |
+| `TELEGRAM_CHAT_ID` | - | Chat ID do Telegram |
+| `OPENAI_API_KEY` | - | Chave da API OpenAI |
+| `CHECK_INTERVAL` | 3600 | Intervalo entre ciclos (segundos) |
+| `TERMS_PER_CYCLE` | 25 | Termos processados por ciclo |
+| `REQUEST_DELAY` | 3 | Delay entre requisicoes (segundos) |
+| `MIN_PROFIT_MARGIN` | 30 | Margem minima de lucro (%) |
 
 ## Comandos do Telegram
 
@@ -77,6 +109,15 @@ Envie `/help` para o seu bot para ver a lista completa de comandos:
 - `/vender [ID] [Valor]` - Marca um item como vendido
 - `/dashboard` - Resumo completo de investimentos e lucros
 
+## Endpoints da API
+
+| Rota | Descricao |
+|------|-----------|
+| `GET /` | Health check com info do sistema |
+| `GET /health` | Health check simples |
+| `GET /stats` | Estatisticas do agente |
+| `GET /categories` | Lista categorias, prioridades e limites de preco |
+
 ## Deploy Gratuito 24/7 no Render.com
 
 ### Passo a Passo
@@ -94,18 +135,24 @@ Envie `/help` para o seu bot para ver a lista completa de comandos:
    - `TELEGRAM_CHAT_ID`
    - `OPENAI_API_KEY`
    - `CHECK_INTERVAL` (opcional, padrao: 3600)
+   - `TERMS_PER_CYCLE` (opcional, padrao: 25)
+   - `REQUEST_DELAY` (opcional, padrao: 3)
+   - `MIN_PROFIT_MARGIN` (opcional, padrao: 30)
 6. Clique em **Create Web Service**
 
 ### Por que Web Service e nao Background Worker?
 
 O plano gratuito do Render desliga Background Workers apos inatividade. Usando um Web Service com Flask, o servico permanece ativo respondendo health checks, enquanto o monitoramento roda em threads de background.
 
-## Otimizacoes de Memoria (v2.0)
+## Otimizacoes de Memoria (v3.0)
 
 | Mudanca | Antes | Depois |
 |---------|-------|--------|
 | Scraping | Selenium + Chrome (~300MB) | requests + BeautifulSoup (~20MB) |
 | Scrapers | Todos instanciados na RAM | Instanciados sob demanda e destruidos |
+| Busca | Todas as keywords por ciclo | Rotacao de 25 termos/ciclo |
+| Prioridade | Sem prioridade | Grupo A > B > C |
+| Filtros | Sem filtro de preco | Preco maximo por categoria |
 | Logging | Arquivo + Console | Apenas Console (economiza disco) |
 | Web Server | Nenhum | Flask leve para health check |
 | Coleta de lixo | Automatica | Forcada apos cada rodada |
@@ -121,11 +168,14 @@ O plano gratuito do Render desliga Background Workers apos inatividade. Usando u
 
 ```
 agente-leiloes/
-├── main.py                 # Ponto de entrada (Flask + Agente)
-├── config.py               # Configuracoes e variaveis de ambiente
+├── main.py                 # Ponto de entrada (Flask + Agente + Rotacao)
+├── config.py               # Configuracoes, categorias e prioridades
 ├── requirements.txt        # Dependencias (sem Selenium!)
 ├── test_scrapers.py        # Script de teste dos scrapers
 ├── README.md               # Este arquivo
+├── database/
+│   ├── auctions.db         # Banco SQLite (criado automaticamente)
+│   └── rotation_state.json # Estado da rotacao (criado automaticamente)
 ├── modules/
 │   ├── __init__.py
 │   ├── analyzer.py         # Analise com OpenAI GPT-4.1-mini
