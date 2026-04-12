@@ -30,7 +30,7 @@ KEYWORDS = [
 # CONFIGURAÇÕES DO SISTEMA
 # ==========================================
 # Intervalo de verificação em segundos (3600 = 1 hora)
-CHECK_INTERVAL = 3600
+CHECK_INTERVAL = int(os.environ.get("CHECK_INTERVAL", "3600"))
 
 # Caminho do banco de dados SQLite
 DB_PATH = os.path.join(os.path.dirname(__file__), "database", "auctions.db")
