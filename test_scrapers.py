@@ -1,10 +1,12 @@
 """
 Script de teste para validar os scrapers individualmente.
 Testa cada scraper com uma palavra-chave e exibe os resultados.
+Todos os scrapers usam apenas requests + BeautifulSoup (sem Selenium).
 """
 import sys
 import os
 import json
+import gc
 
 # Garante que o diretório do projeto está no path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -41,6 +43,11 @@ def test_scraper(scraper_class, keyword):
     except Exception as e:
         print(f"ERRO: {e}")
         return []
+    finally:
+        # Libera memória
+        scraper.session.close()
+        del scraper
+        gc.collect()
 
 if __name__ == "__main__":
     keyword = "golf cart"
