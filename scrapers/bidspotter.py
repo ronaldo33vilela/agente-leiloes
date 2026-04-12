@@ -5,151 +5,152 @@ import json
 class BidSpotterScraper(BaseScraper):
     """
     Scraper para o site BidSpotter.
-    BidSpotter usa JavaScript pesado para renderizar os resultados.
-    Tentamos usar a API interna ou Selenium como fallback.
+    Usa requests + BeautifulSoup (sem Selenium).
+    
+    Estratégia:
+    1. Tenta a API interna de busca do BidSpotter (JSON)
+    2. Fallback para scraping HTML da página de busca
     """
     
     def __init__(self):
         super().__init__("BidSpotter")
         self.base_url = "https://www.bidspotter.com"
-        self.driver = None
-        
-    def _init_driver(self):
-        """Inicializa o Selenium WebDriver se ainda não estiver ativo."""
-        if self.driver:
-            return
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            
-            options = Options()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
-            
-            self.driver = webdriver.Chrome(options=options)
-            self.driver.set_page_load_timeout(30)
-            logger.info("Selenium WebDriver inicializado para BidSpotter.")
-        except Exception as e:
-            logger.error(f"Erro ao inicializar Selenium para BidSpotter: {e}")
-            self.driver = None
         
     def search(self, keyword):
-        """Busca itens no BidSpotter."""
+        """Busca itens no BidSpotter usando requests."""
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
-        self._init_driver()
-        if not self.driver:
-            logger.warning("Selenium não disponível para BidSpotter. Tentando fallback...")
-            return self._search_fallback(keyword)
-            
+        # Tenta a API JSON primeiro
+        results = self._search_api(keyword)
+        if results:
+            return results
+        
+        # Fallback para scraping HTML
+        return self._search_html(keyword)
+    
+    def _search_api(self, keyword):
+        """Tenta buscar via API interna do BidSpotter."""
         try:
-            import time
+            # BidSpotter pode ter uma API de busca interna
+            api_url = f"{self.base_url}/api/search"
+            params = {"query": keyword, "limit": 20}
             
-            # Navega para a página principal e usa o campo de busca
-            search_url = f"{self.base_url}/en-us"
-            self.driver.get(search_url)
-            time.sleep(3)
+            # Adiciona headers específicos para API
+            headers = {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            }
             
-            # Encontra o campo de busca e insere a keyword
-            from selenium.webdriver.common.by import By
-            from selenium.webdriver.common.keys import Keys
+            try:
+                response = self.session.get(api_url, params=params, timeout=15, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    results = []
+                    
+                    items = data if isinstance(data, list) else data.get('results', data.get('items', []))
+                    
+                    for item in items[:20]:
+                        title = item.get('title', item.get('name', ''))
+                        link = item.get('url', item.get('link', ''))
+                        price = item.get('price', item.get('currentBid', 'Consultar no site'))
+                        item_id = item.get('id', str(hash(link) % 100000))
+                        
+                        if title and link:
+                            if not link.startswith('http'):
+                                link = f"{self.base_url}{link}"
+                            results.append({
+                                "id": f"bidspotter_{item_id}",
+                                "site": self.site_name,
+                                "title": title,
+                                "link": link,
+                                "price": str(price),
+                                "keyword": keyword
+                            })
+                    
+                    if results:
+                        logger.info(f"API encontrou {len(results)} itens no {self.site_name}")
+                        return results
+            except Exception:
+                pass
             
-            search_input = self.driver.find_element(By.ID, 'searchTerm')
-            search_input.clear()
-            search_input.send_keys(keyword)
-            search_input.send_keys(Keys.RETURN)
+            return []
             
-            time.sleep(5)
+        except Exception as e:
+            logger.error(f"Erro na busca API do {self.site_name}: {e}")
+            return []
+    
+    def _search_html(self, keyword):
+        """Busca usando scraping HTML."""
+        logger.info(f"Usando busca HTML para {self.site_name}...")
+        
+        # Tenta múltiplas URLs de busca
+        urls_to_try = [
+            (f"{self.base_url}/en-us/search", {"query": keyword}),
+            (f"{self.base_url}/en-us/search", {"q": keyword}),
+            (f"{self.base_url}/search", {"query": keyword}),
+        ]
+        
+        for search_url, params in urls_to_try:
+            soup = self.fetch_page(search_url, params=params)
+            if not soup:
+                continue
             
-            # Extrai os resultados
             results = []
+            processed = set()
             
-            # Tenta encontrar os cards de resultado
-            cards = self.driver.find_elements(By.CSS_SELECTOR, '.lot-card, .search-result, [class*="lot"]')
+            # Busca links de lotes/catálogos
+            link_patterns = [
+                re.compile(r'/auction-catalogues/.*lot-details'),
+                re.compile(r'/lot/'),
+                re.compile(r'/en-us/auction'),
+            ]
             
-            for card in cards[:20]:
-                try:
-                    title_elem = card.find_element(By.CSS_SELECTOR, 'a, h3, h4, .title')
-                    title = title_elem.text.strip()
-                    link = title_elem.get_attribute('href') or ''
-                    
-                    # Tenta encontrar o preço
-                    price_text = "Preço não encontrado"
+            for pattern in link_patterns:
+                links = soup.find_all('a', href=pattern)
+                
+                for link_elem in links:
                     try:
-                        price_elem = card.find_element(By.CSS_SELECTOR, '.price, [class*="price"], [class*="bid"]')
-                        price_text = price_elem.text.strip()
-                    except:
-                        pass
-                    
-                    if title and link:
-                        item_id = f"bidspotter_{hash(link) % 100000}"
+                        href = link_elem.get('href', '')
+                        if href in processed:
+                            continue
+                        processed.add(href)
+                        
+                        title = link_elem.text.strip() or link_elem.get('title', '')
+                        if not title or len(title) < 3:
+                            continue
+                        
+                        # Busca preço no contexto
+                        price = self._extract_price(link_elem)
+                        
+                        item_id = f"bidspotter_{hash(href) % 100000}"
+                        full_link = f"{self.base_url}{href}" if not href.startswith('http') else href
+                        
                         results.append({
                             "id": item_id,
                             "site": self.site_name,
                             "title": title,
-                            "link": link,
-                            "price": price_text,
+                            "link": full_link,
+                            "price": price,
                             "keyword": keyword
                         })
-                except:
-                    continue
-                    
-            logger.info(f"Encontrados {len(results)} itens no {self.site_name} para '{keyword}'")
-            return results
+                    except Exception:
+                        continue
             
-        except Exception as e:
-            logger.error(f"Erro no Selenium para {self.site_name}: {e}")
-            return self._search_fallback(keyword)
-            
-    def _search_fallback(self, keyword):
-        """Fallback usando requests."""
-        logger.info(f"Usando fallback para {self.site_name}...")
+            if results:
+                logger.info(f"HTML encontrou {len(results)} itens no {self.site_name}")
+                return results
         
-        # Tenta buscar via URL direta
-        search_url = f"{self.base_url}/en-us/search"
-        params = {"query": keyword}
-        
-        soup = self.fetch_page(search_url, params=params)
-        if not soup:
-            return []
-            
-        results = []
-        links = soup.find_all('a', href=re.compile(r'/auction-catalogues/.*lot-details'))
-        
-        processed = set()
-        for link_elem in links:
-            try:
-                href = link_elem.get('href', '')
-                if href in processed:
-                    continue
-                processed.add(href)
-                
-                title = link_elem.text.strip() or link_elem.get('title', '')
-                if not title:
-                    continue
-                    
-                item_id = f"bidspotter_{hash(href) % 100000}"
-                results.append({
-                    "id": item_id,
-                    "site": self.site_name,
-                    "title": title,
-                    "link": f"{self.base_url}{href}" if not href.startswith('http') else href,
-                    "price": "Preço não encontrado",
-                    "keyword": keyword
-                })
-            except:
-                continue
-                
-        logger.info(f"Fallback encontrou {len(results)} itens no {self.site_name}")
-        return results
-        
-    def __del__(self):
-        if self.driver:
-            try:
-                self.driver.quit()
-            except:
-                pass
+        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
+        return []
+    
+    def _extract_price(self, element):
+        """Extrai preço do contexto próximo a um elemento."""
+        parent = element
+        for _ in range(5):
+            parent = parent.parent
+            if parent is None:
+                break
+            price_match = re.search(r'[\$£€][\d,]+\.?\d*', parent.text)
+            if price_match:
+                return price_match.group(0)
+        return "Consultar no site"
