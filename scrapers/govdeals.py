@@ -1,4 +1,5 @@
 from .base_scraper import BaseScraper, logger
+from .auction_utils import should_include_item
 import re
 import json
 
@@ -10,6 +11,7 @@ class GovDealsScraper(BaseScraper):
     Estratégia:
     1. Tenta a API interna de busca do GovDeals (JSON)
     2. Fallback para scraping HTML da página de busca
+    3. Filtra apenas leilões ATIVOS (ignora closed/ended/sold)
     """
     
     def __init__(self):
@@ -65,6 +67,12 @@ class GovDealsScraper(BaseScraper):
                     if not title or href in processed or len(title) < 3:
                         continue
                     
+                    # Filtra apenas leilões ativos
+                    element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                    if not should_include_item(element_context, title):
+                        logger.debug(f"Item descartado (leilão finalizado): {title}")
+                        continue
+                    
                     processed.add(href)
                     
                     # Extrai ID do item
@@ -92,7 +100,7 @@ class GovDealsScraper(BaseScraper):
                 except Exception as e:
                     logger.error(f"Erro ao processar item da API: {e}")
             
-            logger.info(f"API encontrou {len(results)} itens no {self.site_name} para '{keyword}'")
+            logger.info(f"API encontrou {len(results)} itens ATIVOS no {self.site_name} para '{keyword}'")
             return results
             
         except Exception as e:
@@ -123,6 +131,12 @@ class GovDealsScraper(BaseScraper):
                 
                 if not title or href in processed or len(title) < 3:
                     continue
+                
+                # Filtra apenas leilões ativos
+                element_context = link_elem.parent.get_text() if link_elem.parent else ""
+                if not should_include_item(element_context, title):
+                    logger.debug(f"Item descartado (leilão finalizado): {title}")
+                    continue
                     
                 processed.add(href)
                 parts = href.strip('/').split('/')
@@ -142,7 +156,7 @@ class GovDealsScraper(BaseScraper):
             except Exception as e:
                 logger.error(f"Erro no scraping HTML: {e}")
                 
-        logger.info(f"HTML encontrou {len(results)} itens no {self.site_name}")
+        logger.info(f"HTML encontrou {len(results)} itens ATIVOS no {self.site_name}")
         return results
     
     def _extract_price(self, element):
