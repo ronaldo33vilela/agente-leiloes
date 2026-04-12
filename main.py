@@ -993,8 +993,13 @@ a:hover{{text-decoration:underline}}
 .cat-sub-details.expanded{{max-height:3000px!important;display:block!important}}
 
 .term-list{{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:15px}}
-.term-item{{background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px;cursor:pointer;transition:border-color 0.2s}}
-.term-item:hover{{border-color:#58a6ff}}
+.term-item{{background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color 0.2s}}
+.term-item:hover{{border-color:#58a6ff;background:#1c2128}}
+.term-name{{color:#f0f6fc;font-weight:500}}
+.term-count{{color:#8b949e;font-size:11px}}
+.term-links{{display:flex;gap:6px;flex-wrap:nowrap}}
+.search-link{{color:#58a6ff;text-decoration:none;font-size:11px;font-weight:600;padding:3px 8px;background:#21262d;border-radius:4px;border:1px solid #30363d;transition:all 0.2s;white-space:nowrap}}
+.search-link:hover{{background:#30363d;border-color:#58a6ff;color:#79c0ff}}
 .term-name{{color:#f0f6fc;font-weight:500;margin-bottom:5px}}
 .term-count{{color:#8b949e;font-size:11px}}
 
@@ -1394,9 +1399,25 @@ function renderCategoryData(data, detailsElem) {{
     
     data.terms.forEach(function(term) {{
         var itemCount = data.items_by_term[term] ? data.items_by_term[term].length : 0;
+        var encodedTerm = encodeURIComponent(term);
+        var govdealsUrl = 'https://www.govdeals.com/index.cfm?fa=Main.AdvSearchResultsNew&searchPg=Classic&kword=' + encodedTerm;
+        var bidspotterUrl = 'https://www.bidspotter.com/en-us/search?query=' + encodedTerm;
+        var publicsurplusUrl = 'https://www.publicsurplus.com/sms/browse/search?posting=y&keyword=' + encodedTerm;
+        var jjkaneUrl = 'https://www.jjkane.com/search?q=' + encodedTerm;
+        var avgearUrl = 'https://www.avgear.com/pages/auctions';
+        
         html += '<div class="term-item">';
+        html += '<div style="flex:1">';
         html += '<div class="term-name">' + term + '</div>';
         html += '<div class="term-count">' + itemCount + ' ite' + (itemCount !== 1 ? 'ns' : 'm') + '</div>';
+        html += '</div>';
+        html += '<div class="term-links">';
+        html += '<a href="' + govdealsUrl + '" target="_blank" title="Buscar em GovDeals" class="search-link">GD</a>';
+        html += '<a href="' + bidspotterUrl + '" target="_blank" title="Buscar em BidSpotter" class="search-link">BS</a>';
+        html += '<a href="' + publicsurplusUrl + '" target="_blank" title="Buscar em Public Surplus" class="search-link">PS</a>';
+        html += '<a href="' + jjkaneUrl + '" target="_blank" title="Buscar em JJ Kane" class="search-link">JK</a>';
+        html += '<a href="' + avgearUrl + '" target="_blank" title="Ver leiloes AVGear" class="search-link">AV</a>';
+        html += '</div>';
         html += '</div>';
     }});
     
