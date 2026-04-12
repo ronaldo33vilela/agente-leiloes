@@ -46,7 +46,6 @@ class PostAuctionManager:
                 logger.error(f"Erro ao verificar rastreamento: {e}")
                 
             # Verifica a cada 6 horas (21600 segundos)
-            # Para testes, podemos usar um valor menor
             time.sleep(21600)
             
     def _check_tracking(self):
@@ -57,20 +56,7 @@ class PostAuctionManager:
             try:
                 # Aqui integraríamos com uma API real de rastreamento (como Shippo, EasyPost, etc.)
                 # Como não temos uma API key real configurada, vamos simular a verificação
-                
-                # Simulação de atualização de status baseada no tempo
-                # Na prática, você faria: status = self._call_tracking_api(item['carrier'], item['tracking_number'])
-                
-                # Exemplo de como seria a chamada real (comentado):
-                # status = self._get_real_tracking_status(item['carrier'], item['tracking_number'])
-                
-                # Para o nosso protótipo, vamos apenas registrar que a verificação ocorreu
                 logger.info(f"Verificando rastreamento para o item {item['id']} ({item['tracking_number']})")
-                
-                # Se o status mudasse para "Entregue", moveríamos para o estoque:
-                # if status == "Entregue":
-                #     database.move_to_inventory(item['id'], "Descrição", item['price_paid'] * 1.5, "Usado")
-                #     self.bot.bot.send_message(self.bot.chat_id, f"📦 O item {item['title']} foi entregue e movido para o estoque!")
                 
             except Exception as e:
                 logger.error(f"Erro ao verificar rastreamento para o item {item['id']}: {e}")
