@@ -368,11 +368,19 @@ def api_category(category_name):
                 cursor = conn.cursor()
                 try:
                     for term in terms:
+                        # Busca por keyword E category para evitar dados cruzados
                         cursor.execute(
-                            "SELECT * FROM notified_items WHERE keyword = ? ORDER BY rowid DESC LIMIT 20",
-                            (term,)
+                            "SELECT * FROM notified_items WHERE keyword = ? AND category = ? ORDER BY rowid DESC LIMIT 20",
+                            (term, category_name)
                         )
                         rows = cursor.fetchall()
+                        if not rows:
+                            # Fallback: busca apenas por keyword (compatibilidade)
+                            cursor.execute(
+                                "SELECT * FROM notified_items WHERE keyword = ? ORDER BY rowid DESC LIMIT 20",
+                                (term,)
+                            )
+                            rows = cursor.fetchall()
                         if rows:
                             items_by_term[term] = [dict(row) for row in rows]
                 except sqlite3.OperationalError:
@@ -451,15 +459,39 @@ def send_telegram_message(chat_id, text, parse_mode="HTML"):
 
 @app.route("/api/clear-data", methods=["POST"])
 def clear_data():
-    """Limpa os dados antigos do banco de dados."""
+    """Limpa TODOS os dados do banco de dados."""
     try:
-        from modules.database import clear_notified_items, clear_watchlist, clear_price_history
+        from modules.database import clear_notified_items, clear_watchlist, clear_price_history, get_connection
         
-        # Limpar tabelas
+        # Limpar tabelas principais
         clear_notified_items()
         clear_watchlist()
         clear_price_history()
         
+        # Limpar tabelas adicionais (won_items, inventory, agenda)
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            for table in ['won_items', 'inventory', 'agenda']:
+                try:
+                    cursor.execute(f"DELETE FROM {table}")
+                except Exception:
+                    pass
+            conn.commit()
+            conn.close()
+            logger.info("Tabelas adicionais limpas (won_items, inventory, agenda)")
+        except Exception as e2:
+            logger.warning(f"Aviso ao limpar tabelas adicionais: {e2}")
+        
+        # Resetar contadores em memoria
+        global _activity_counters
+        with _counters_lock:
+            _activity_counters["items_found_total"] = 0
+            _activity_counters["items_found_this_cycle"] = 0
+            _activity_counters["alerts_sent"] = 0
+            _activity_counters["errors_count"] = 0
+        
+        logger.info("TODOS os dados foram limpos com sucesso")
         return jsonify({
             "status": "success",
             "message": "Todos os dados foram limpos com sucesso. Pronto para começar do zero!"
