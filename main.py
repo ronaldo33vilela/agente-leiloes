@@ -503,6 +503,36 @@ def clear_data():
             "message": f"Erro ao limpar dados: {str(e)}"
         }), 500
 
+@app.route("/api/scan-now", methods=["POST"])
+def scan_now():
+    """Dispara uma varredura manual imediata em todas as plataformas."""
+    try:
+        logger.info("Varredura manual iniciada via dashboard...")
+        
+        # Dispara a busca em background (nao bloqueia a resposta)
+        def run_manual_scan():
+            try:
+                # Executa um ciclo de busca
+                agent.run_cycle()
+                logger.info("Varredura manual concluida com sucesso")
+            except Exception as e:
+                logger.error(f"Erro durante varredura manual: {e}")
+        
+        # Executa em thread separada para nao bloquear
+        scan_thread = threading.Thread(target=run_manual_scan, daemon=True)
+        scan_thread.start()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Varredura manual iniciada. Aguarde os resultados..."
+        }), 200
+    except Exception as e:
+        logger.error(f"Erro ao iniciar varredura manual: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"Erro ao iniciar varredura: {str(e)}"
+        }), 500
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     """Recebe updates do Telegram e processa comandos."""
@@ -1162,6 +1192,7 @@ a:hover{{text-decoration:underline}}
         <span>|</span>
         <span>Auto-refresh: 60s</span>
         <span>|</span>
+        <button onclick="scanNow(event)" style="background:#238636;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.2s;margin-right:8px" onmouseover="this.style.background='#2ea043'" onmouseout="this.style.background='#238636'">Varredura Manual</button>
         <button onclick="clearAllData(event)" style="background:#f85149;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:background 0.2s" onmouseover="this.style.background='#da3633'" onmouseout="this.style.background='#f85149'">Limpar Dados</button>
     </div>
 </div>
@@ -1522,6 +1553,52 @@ function clearAllData(event) {{
         alert('Erro ao limpar dados: ' + error.message);
         btn.disabled = false;
         btn.textContent = 'Limpar Dados';
+    }});
+}}
+
+function scanNow(event) {{
+    var btn = event.currentTarget || event.target;
+    if (!btn) {{
+        alert('Erro: botao nao encontrado');
+        return;
+    }}
+    btn.disabled = true;
+    btn.textContent = 'Buscando...';
+    
+    console.log('Iniciando varredura manual...');
+    
+    fetch('/api/scan-now', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}}
+    }})
+    .then(function(response) {{
+        console.log('Resposta HTTP:', response.status);
+        if (!response.ok) {{
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }}
+        return response.json();
+    }})
+    .then(function(data) {{
+        console.log('Dados retornados:', data);
+        if (data.status === 'success') {{
+            alert('Varredura manual iniciada! Os resultados aparecerao em breve no dashboard.');
+            btn.disabled = false;
+            btn.textContent = 'Varredura Manual';
+            // Recarrega o dashboard em 5 segundos para mostrar novos resultados
+            setTimeout(function() {{
+                location.reload();
+            }}, 5000);
+        }} else {{
+            alert('Erro: ' + data.message);
+            btn.disabled = false;
+            btn.textContent = 'Varredura Manual';
+        }}
+    }})
+    .catch(function(error) {{
+        console.error('Erro na requisicao:', error);
+        alert('Erro ao iniciar varredura: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Varredura Manual';
     }});
 }}
 
