@@ -1,19 +1,15 @@
 from .base_scraper import BaseScraper, logger
-from .auction_utils import should_include_item
-from .relevance_filter import filter_items
 import re
-import sys
+import json
 
 class BidSpotterScraper(BaseScraper):
     """
     Scraper para o site BidSpotter.
     Usa requests + BeautifulSoup (sem Selenium).
     
-    Estratégia (atualizada 2026-04):
-    1. Busca via /en-us/search-results?searchTerm= (formulário real do site)
-    2. Extrai lotes usando atributo data-lot-id nos elementos HTML
-    3. Fallback: busca links de catálogos com padrão /auction-catalogues/.../lot-
-    4. Filtra apenas leilões ATIVOS (ignora closed/ended/sold)
+    Estratégia:
+    1. Tenta a API interna de busca do BidSpotter (JSON)
+    2. Fallback para scraping HTML da página de busca
     """
     
     def __init__(self):
@@ -24,216 +20,174 @@ class BidSpotterScraper(BaseScraper):
         """Busca itens no BidSpotter usando requests."""
         logger.info(f"Buscando '{keyword}' no {self.site_name}...")
         
-        # Estratégia principal: search-results (URL real do formulário)
-        results = self._search_results_page(keyword)
+        # Tenta a API JSON primeiro
+        results = self._search_api(keyword)
         if results:
             return results
         
-        logger.info(f"Nenhum resultado ATIVO encontrado no {self.site_name} para '{keyword}'")
-        return []
+        # Fallback para scraping HTML
+        return self._search_html(keyword)
     
-    def _search_results_page(self, keyword):
-        """Busca via /en-us/search-results?searchTerm= (URL real do formulário do site)."""
-        search_url = f"{self.base_url}/en-us/search-results"
-        params = {"searchTerm": keyword}
-        
-        logger.debug(f"[BidSpotter] Acessando: {search_url}?searchTerm={keyword}")
-        logger.debug(f"[BidSpotter] Headers: {self.session.headers}")
-        
-        soup = self.fetch_page(search_url, params=params)
-        if not soup:
-            logger.error(f"[BidSpotter] FALHA ao acessar search-results (retornou None)")
-            return []
-        
-        # Log do tamanho da resposta
-        html_size = len(soup.prettify()) if soup else 0
-        logger.debug(f"[BidSpotter] HTML recebido: {html_size} bytes")
-        
-        # Verificar se redirecionou para página de erro
-        title_tag = soup.find('title')
-        title_text = title_tag.get_text() if title_tag else "(sem title)"
-        logger.debug(f"[BidSpotter] Title da página: {title_text}")
-        
-        if title_tag and 'error' in title_text.lower():
-            logger.error(f"[BidSpotter] Página de erro detectada: {title_text}")
-            return []
-        
-        # Verificar se é página de bloqueio (403, captcha, etc)
-        if any(x in title_text.lower() for x in ['403', 'forbidden', 'blocked', 'captcha', 'robot', 'access denied']):
-            logger.error(f"[BidSpotter] BLOQUEIO detectado: {title_text}")
-            return []
-        
-        results = []
-        processed_ids = set()
-        
-        # Estratégia 1: Extrair lotes via data-lot-id (mais confiável)
-        lot_elements = soup.find_all(attrs={"data-lot-id": True})
-        logger.info(f"[BidSpotter] Encontrados {len(lot_elements)} elementos com data-lot-id")
-        
-        if not lot_elements:
-            # Debug: procurar por qualquer div/li que possa conter lotes
-            all_divs = soup.find_all('div', limit=20)
-            all_lis = soup.find_all('li', limit=20)
-            logger.debug(f"[BidSpotter] Debug - {len(all_divs)} divs, {len(all_lis)} lis encontrados")
-            logger.debug(f"[BidSpotter] Primeiros 500 chars do HTML: {soup.prettify()[:500]}")
-        
-        for el in lot_elements:
+    def _search_api(self, keyword):
+        """Tenta buscar via API interna do BidSpotter."""
+        try:
+            # BidSpotter pode ter uma API de busca interna
+            api_url = f"{self.base_url}/api/search"
+            params = {"query": keyword, "limit": 20}
+            
+            # Adiciona headers específicos para API
+            headers = {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+            
             try:
-                lot_id = el.get('data-lot-id', '')
-                if not lot_id or lot_id in processed_ids:
-                    continue
-                
-                # Extrair título - procurar em links e headings dentro do elemento
-                title = self._extract_lot_title(el)
-                if not title or len(title) < 3 or title == 'No Image':
-                    continue
-                
-                # Limpar números de lote grudados no início do título (ex: "139Clubcar Golf cart")
-                title = re.sub(r'^\d+', '', title).strip()
-                if not title:
-                    continue
-                
-                # Extrair link
-                link = self._extract_lot_link(el)
-                if not link:
-                    continue
-                
-                # Verificar se é leilão ativo
-                element_text = el.get_text()
-                if not should_include_item(element_text, title):
-                    logger.debug(f"Item descartado (leilão finalizado): {title}")
-                    continue
-                
-                processed_ids.add(lot_id)
-                
-                # Extrair preço
-                price = self._extract_price(el)
-                
-                full_link = link if link.startswith('http') else f"{self.base_url}{link}"
-                
-                results.append({
-                    "id": f"bidspotter_{lot_id[:12]}",
-                    "site": self.site_name,
-                    "title": title,
-                    "link": full_link,
-                    "price": price,
-                    "keyword": keyword
-                })
-            except Exception as e:
-                logger.debug(f"Erro ao processar lote: {e}")
-                continue
-        
-        # Estratégia 2 (fallback): Buscar links de catálogos com lot-details
-        if not results:
-            results = self._extract_catalog_links(soup, keyword)
-        
-        if results:
-            # Filtrar por relevância
-            results = filter_items(results, keyword, min_score=0.5)
-            logger.info(f"[BidSpotter] Encontrados {len(results)} itens ATIVOS e relevantes")
-        else:
-            logger.warning(f"[BidSpotter] Nenhum resultado encontrado para '{keyword}'")
-        
-        return results
+                response = self.session.get(api_url, params=params, timeout=15, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    results = []
+                    
+                    items = data if isinstance(data, list) else data.get('results', data.get('items', []))
+                    
+                    for item in items[:20]:
+                        title = item.get('title', item.get('name', ''))
+                        link = item.get('url', item.get('link', ''))
+                        price = item.get('price', item.get('currentBid', 'Consultar no site'))
+                        item_id = item.get('id', str(hash(link) % 100000))
+                        
+                        if title and link:
+                            if not link.startswith('http'):
+                                link = f"{self.base_url}{link}"
+                            results.append({
+                                "id": f"bidspotter_{item_id}",
+                                "site": self.site_name,
+                                "title": title,
+                                "link": link,
+                                "price": str(price),
+                                "keyword": keyword
+                            })
+                    
+                    if results:
+                        logger.info(f"API encontrou {len(results)} itens no {self.site_name}")
+                        return results
+            except Exception:
+                pass
+            
+            return []
+            
+        except Exception as e:
+            logger.error(f"Erro na busca API do {self.site_name}: {e}")
+            return []
     
-    def _extract_lot_title(self, element):
-        """Extrai título do lote de um elemento."""
-        # Procurar em headings primeiro
-        for tag in ['h2', 'h3', 'h4', 'h5']:
-            heading = element.find(tag)
-            if heading:
-                text = heading.get_text(strip=True)
-                if text and len(text) > 3 and text != 'No Image':
-                    return text
+    def _search_html(self, keyword):
+        """Busca usando scraping HTML."""
+        logger.info(f"Usando busca HTML para {self.site_name}...")
         
-        # Procurar em links com texto significativo
-        for link in element.find_all('a', href=True):
-            text = link.get_text(strip=True)
-            if text and len(text) > 5 and text != 'No Image' and not text.startswith('http'):
-                return text
+        # Tenta múltiplas URLs de busca
+        urls_to_try = [
+            (f"{self.base_url}/en-us/search-results", {"searchTerm": keyword}),
+            (f"{self.base_url}/en-us/search", {"query": keyword}),
+            (f"{self.base_url}/en-us/search", {"q": keyword}),
+            (f"{self.base_url}/search", {"query": keyword}),
+        ]
         
-        # Procurar em alt de imagens
-        img = element.find('img', alt=True)
-        if img:
-            alt = img.get('alt', '').strip()
-            if alt and len(alt) > 5 and alt not in ['No Image', 'Loading...']:
-                return alt
-        
-        return ''
-    
-    def _extract_lot_link(self, element):
-        """Extrai link do lote de um elemento."""
-        # Procurar link de catálogo/lote
-        for link in element.find_all('a', href=True):
-            href = link['href']
-            if '/auction-catalogues/' in href or '/lot' in href.lower():
-                return href
-        
-        # Qualquer link válido
-        for link in element.find_all('a', href=True):
-            href = link['href']
-            if href and href != '#' and not href.startswith('javascript:'):
-                return href
-        
-        return ''
-    
-    def _extract_catalog_links(self, soup, keyword):
-        """Fallback: extrai links de catálogos com padrão /auction-catalogues/."""
-        results = []
-        processed = set()
-        
-        for link in soup.find_all('a', href=True):
-            href = link['href']
-            if '/auction-catalogues/' not in href:
-                continue
-            if 'lot' not in href.lower():
-                continue
-            if href in processed:
+        for search_url, params in urls_to_try:
+            soup = self.fetch_page(search_url, params=params)
+            if not soup:
                 continue
             
-            title = link.get_text(strip=True)
-            if not title or len(title) < 5:
-                continue
+            results = []
+            processed = set()
             
-            # Limpar números grudados
-            title = re.sub(r'^\d+', '', title).strip()
-            if not title:
-                continue
+            # Busca links <a> com data-lot-id e classe a-wrapped (lotes reais)
+            lot_links = soup.find_all('a', attrs={"data-lot-id": True, "class": lambda c: c and 'a-wrapped' in c})
+            if lot_links:
+                logger.info(f"Encontrados {len(lot_links)} lotes via a[data-lot-id].a-wrapped")
+                for el in lot_links:
+                    try:
+                        lot_id = el.get('data-lot-id', '')
+                        if not lot_id or lot_id in processed:
+                            continue
+                        href = el.get('href', '')
+                        if not href or href == '#':
+                            continue
+                        title = el.get_text(strip=True)
+                        if not title or len(title) < 3 or title == 'No Image':
+                            continue
+                        # Limpar numeros grudados no inicio
+                        title = re.sub(r'^\d+', '', title).strip()
+                        if not title:
+                            continue
+                        processed.add(lot_id)
+                        price = self._extract_price(el)
+                        full_link = href if href.startswith('http') else f"{self.base_url}{href}"
+                        results.append({
+                            "id": f"bidspotter_{lot_id[:12]}",
+                            "site": self.site_name,
+                            "title": title,
+                            "link": full_link,
+                            "price": price,
+                            "keyword": keyword
+                        })
+                    except Exception:
+                        continue
+                if results:
+                    logger.info(f"data-lot-id encontrou {len(results)} itens no {self.site_name}")
+                    return results
             
-            element_text = link.parent.get_text() if link.parent else ""
-            if not should_include_item(element_text, title):
-                continue
+            # Fallback: Busca links de lotes/catálogos
+            link_patterns = [
+                re.compile(r'/auction-catalogues/.*lot-details'),
+                re.compile(r'/lot/'),
+                re.compile(r'/en-us/auction'),
+            ]
             
-            processed.add(href)
-            price = self._extract_price(link)
-            full_link = href if href.startswith('http') else f"{self.base_url}{href}"
+            for pattern in link_patterns:
+                links = soup.find_all('a', href=pattern)
+                
+                for link_elem in links:
+                    try:
+                        href = link_elem.get('href', '')
+                        if href in processed:
+                            continue
+                        processed.add(href)
+                        
+                        title = link_elem.text.strip() or link_elem.get('title', '')
+                        if not title or len(title) < 3:
+                            continue
+                        
+                        # Busca preço no contexto
+                        price = self._extract_price(link_elem)
+                        
+                        item_id = f"bidspotter_{hash(href) % 100000}"
+                        full_link = f"{self.base_url}{href}" if not href.startswith('http') else href
+                        
+                        results.append({
+                            "id": item_id,
+                            "site": self.site_name,
+                            "title": title,
+                            "link": full_link,
+                            "price": price,
+                            "keyword": keyword
+                        })
+                    except Exception:
+                        continue
             
-            results.append({
-                "id": f"bidspotter_{hash(href) % 100000}",
-                "site": self.site_name,
-                "title": title,
-                "link": full_link,
-                "price": price,
-                "keyword": keyword
-            })
+            if results:
+                logger.info(f"HTML encontrou {len(results)} itens no {self.site_name}")
+                return results
         
-        return results
+        logger.info(f"Nenhum resultado encontrado no {self.site_name} para '{keyword}'")
+        return []
     
     def _extract_price(self, element):
         """Extrai preço do contexto próximo a um elemento."""
-        # Procurar no próprio elemento
-        price_match = re.search(r'[\$£€][\d,]+\.?\d*', element.get_text())
-        if price_match:
-            return price_match.group(0)
-        
-        # Procurar nos pais
         parent = element
         for _ in range(5):
             parent = parent.parent
             if parent is None:
                 break
-            price_match = re.search(r'[\$£€][\d,]+\.?\d*', parent.get_text())
+            price_match = re.search(r'[\$£€][\d,]+\.?\d*', parent.text)
             if price_match:
                 return price_match.group(0)
-        
         return "Consultar no site"
