@@ -27,7 +27,6 @@ from modules.post_auction import PostAuctionManager
 from scrapers.govdeals import GovDealsScraper
 from scrapers.publicsurplus import PublicSurplusScraper
 from scrapers.bidspotter import BidSpotterScraper
-from scrapers.avgear import AVGearScraper
 from scrapers.jjkane import JJKaneScraper
 
 from flask import Flask, jsonify, request
@@ -151,7 +150,6 @@ class AuctionAgent:
             GovDealsScraper,
             PublicSurplusScraper,
             BidSpotterScraper,
-            AVGearScraper,
             JJKaneScraper,
         ]
 
@@ -1586,21 +1584,6 @@ a:hover{{text-decoration:underline}}
                 <div class="plat-search">
                     <input type="text" id="search-jjkane" placeholder="Buscar em JJ Kane..." class="plat-input" onkeydown="if(event.key==='Enter')searchPlatform('jjkane')">
                     <button onclick="searchPlatform('jjkane')" class="plat-btn">Buscar</button>
-                </div>
-            </div>
-
-            <div class="platform-card">
-                <div class="plat-header" style="border-left:4px solid #f85149">
-                    <div class="plat-icon">&#127908;</div>
-                    <div class="plat-info">
-                        <div class="plat-name">AVGear</div>
-                        <div class="plat-desc">Leiloes especiais de equipamentos de audio e video profissional</div>
-                    </div>
-                    <a href="https://www.avgear.com/pages/auctions" target="_blank" class="plat-visit">Visitar</a>
-                </div>
-                <div class="plat-search">
-                    <input type="text" id="search-avgear" placeholder="AVGear nao tem busca (leiloes via parceiros)" class="plat-input" disabled>
-                    <a href="https://www.avgear.com/pages/auctions" target="_blank" class="plat-btn">Ver Leiloes</a>
                 </div>
             </div>
 

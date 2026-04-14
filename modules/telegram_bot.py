@@ -560,8 +560,6 @@ class AuctionTelegramBot:
             return 'Public Surplus'
         elif 'jjkane' in url_lower:
             return 'JJ Kane'
-        elif 'avgear' in url_lower:
-            return 'AVGear'
         elif 'hibid' in url_lower:
             return 'HiBid'
         elif 'josephfinn' in url_lower:
@@ -666,7 +664,6 @@ class AuctionTelegramBot:
             from scrapers.bidspotter import BidSpotterScraper
             from scrapers.publicsurplus import PublicSurplusScraper
             from scrapers.jjkane import JJKaneScraper
-            from scrapers.avgear import AVGearScraper
             from scrapers.relevance_filter import filter_items
 
             platforms = [
@@ -674,7 +671,6 @@ class AuctionTelegramBot:
                 (PublicSurplusScraper, 'Public Surplus'),
                 (GovDealsScraper, 'GovDeals'),
                 (JJKaneScraper, 'JJ Kane'),
-                (AVGearScraper, 'AVGear'),
             ]
 
             all_results = []
