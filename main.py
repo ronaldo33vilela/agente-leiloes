@@ -188,18 +188,29 @@ class AuctionAgent:
         total_found = 0
         with _counters_lock:
             _activity_counters["items_found_this_cycle"] = 0
+        from scrapers.relevance_filter import is_relevant
         for category, keyword in batch:
             for scraper_class in self._scraper_classes:
                 scraper = None
                 try:
                     scraper = scraper_class()
                     items = scraper.search(keyword)
-                    for item in items:
+                    raw_count = len(items) if items else 0
+                    relevant_count = 0
+                    for item in (items or []):
+                        # Filtro de relevancia: ignorar itens irrelevantes
+                        title = item.get("title", "")
+                        if not is_relevant(title, keyword, min_score=0.4):
+                            continue
                         item["category"] = category
                         item["priority"] = self._get_priority(category)
                         item["keyword"] = keyword
                         self._process_item(item, category)
                         total_found += 1
+                        relevant_count += 1
+                    if raw_count > 0:
+                        site_name = scraper.site_name if scraper else scraper_class.__name__
+                        logger.info(f"Filtro de relevancia: {relevant_count}/{raw_count} itens relevantes para '{keyword}' em {site_name}")
                 except Exception as e:
                     site_name = scraper.site_name if scraper else scraper_class.__name__
                     logger.error(f"Erro ao executar scraper {site_name} para '{keyword}': {e}")
@@ -992,7 +1003,7 @@ def _build_dashboard_html():
                 title = str(title)[:67] + "..."
             items_rows += (
                 f'<tr>'
-                f'<td class="td-title">{title}</td>'
+                f'<td class="td-title"><a href="{link}" target="_blank" style="color:#58a6ff;text-decoration:none">{title}</a></td>'
                 f'<td>{site}</td>'
                 f'<td class="td-price">{price}</td>'
                 f'<td><span class="status-active">Notificado</span></td>'
@@ -1851,7 +1862,7 @@ function renderCategoryData(data, detailsElem) {{
                     var site = item.site || 'N/A';
                     var link = item.link || item.url || '#';
                     html += '<tr>';
-                    html += '<td class="item-title" title="' + title + '">' + title + '</td>';
+                    html += '<td class="item-title" title="' + title + '"><a href="' + link + '" target="_blank" style="color:#58a6ff;text-decoration:none">' + title + '</a></td>';
                     html += '<td style="color:#8b949e;font-size:11px">' + term + '</td>';
                     html += '<td><span class="platform-badge">' + site + '</span></td>';
                     html += '<td class="item-price">' + price + '</td>';
